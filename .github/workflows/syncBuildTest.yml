@@ -1,5 +1,5 @@
 name: C/C++ CI
-
+# This file is not intended to run on schedule. For scheduled update, see UpdateEmscripten(Forward).yml
 on:
   push:
     branches:

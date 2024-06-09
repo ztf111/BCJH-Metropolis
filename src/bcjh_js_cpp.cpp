@@ -46,7 +46,6 @@ std::string decodeUnicodeEscape(const std::string &input) {
 }
 
 int main() {
-    int8_t progress = 0;
     auto str = runjs(userData_CONST, ruleData_CONST, 3170000, 50, 10, true);
     // encode all unicodes in the string
     str = decodeUnicodeEscape(str);

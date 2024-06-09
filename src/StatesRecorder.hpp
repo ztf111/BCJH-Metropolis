@@ -121,17 +121,17 @@ class StatesRecorder {
         delete[] states_ptr;
     }
 
-    States **get_states(int i) {
+    States **get_states(size_t i) {
         states_ptr = new States *[i];
         if (i > states.size()) {
-            for (int j = 0; j < states.size(); j++) {
+            for (size_t j = 0; j < states.size(); j++) {
                 states_ptr[j] = states[j];
             }
-            for (int j = (int)states.size(); j < i; j++) {
+            for (size_t j = states.size(); j < i; j++) {
                 states_ptr[j] = NULL;
             }
         } else {
-            for (int j = 0; j < i; j++) {
+            for (size_t j = 0; j < i; j++) {
                 states_ptr[j] = states[j];
             }
         }

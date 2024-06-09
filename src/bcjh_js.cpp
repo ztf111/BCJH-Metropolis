@@ -67,11 +67,10 @@ std::string
     const int T_MAX_CHEF = targetScore / 100;
     const int T_MAX_RECIPE = targetScore / 400;
     SARunner::init(T_MAX_CHEF, T_MAX_RECIPE, iterChef, iterRecipe, targetScore);
-    bool silent = false;
     int log = SILENT | VERBOSE;
-    struct timespec ts;
     int seed = (int)time(NULL);
 #ifdef EMSCRIPTEN
+    struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     seed += ts.tv_nsec + ts.tv_sec;
 #endif
@@ -120,6 +119,7 @@ std::string
     debugIntegrity(result.state);
     exactChefTool(rl, result.state);
 
+    // Logging
     int score = sumPrice(rl, result.state, log);
     std::cout << "**************\n总分: " << result.score << "\n***************"
               << std::endl;

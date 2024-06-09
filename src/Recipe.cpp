@@ -23,6 +23,9 @@ Recipe::Recipe(Json::Value &recipe) {
     this->cookAbility.knife = recipe["knife"].asInt();
     this->getMaterials(recipe["materials"]);
     this->flavor = this->getFlavor(recipe["condiment"]);
+    for (auto &m : recipe["tags"]) {
+        this->tagsForSkills.insert(m.asInt());
+    }
 }
 // Flavor Recipe::getFlavor(Json::Value &flavorJson) {
 //     std::string flavorStr = flavorJson.asString();
@@ -122,12 +125,12 @@ void Recipe::initRarityBuff(const Json::Value &usrBuff) {
     }
 }
 void Recipe::getMaterials(Json::Value &materialsJson) {
-    this->materials.clear();
+    // this->materials.clear();
     this->materialCategories = Materials();
     for (auto m : materialsJson) {
         int materialId = m["material"].asInt();
         int quantity = m["quantity"].asInt();
-        this->materials[materialId] = quantity;
+        // this->materials[materialId] = quantity;
 
         for (auto meat : materialList.meat) {
             if (materialId == meat) {

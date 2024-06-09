@@ -112,7 +112,10 @@ States SARunner::run(States *s0,
     this->bestEnergy = energy;
     int step = 0;
     double t = this->tMax;
+#if defined(_WIN32) || defined(EMSCRIPTEN_PROGRESS)
     int progressPercent = 0;
+#endif
+
     while (step < this->stepMax) {
 
 #ifdef EMSCRIPTEN_PROGRESS

@@ -123,9 +123,10 @@ Chef::Chef(Json::Value &chef, int ultimateSkillId)
     if (chef.isMember("chefId") && chef.isMember("name") &&
         chef.isMember("skill")) {
 
-        this->skill = new Skill();
-        this->companyBuff = new Skill();
-        this->nextBuff = new Skill();
+        this->skill = new Skill(Skill::SELF);
+        this->companyBuff = new Skill(Skill::PARTIAL);
+        this->nextBuff = new Skill(Skill::NEXT);
+        this->tagForCompanyBuff = new Tags();
         this->skill->ability = CookAbility(chef);
         if (chef.isMember("tags") && chef["tags"].isArray()) {
             auto tags = chef["tags"];
@@ -140,6 +141,7 @@ Chef::Chef(Json::Value &chef, int ultimateSkillId)
                     this->female = true;
                     this->skill->ability.add(globalAbilityFemale);
                 }
+                this->tagForCompanyBuff->insert(tag.asInt());
             }
         }
     } else {
@@ -232,45 +234,52 @@ CookAbility::CookAbility(const Json::Value &v) {
 }
 void Skill::loadJson(const Json::Value &v) {
     std::map<std::string, std::string> missingSkills;
-    std::set<std::string> ignoredSkills = {"Sweet",
-                                           "Sour",
-                                           "Salty",
-                                           "Bitter",
-                                           "Spicy",
-                                           "Tasty",
-                                           "Vegetable",
-                                           "Meat",
-                                           "Fish",
-                                           "Creation",
-                                           "ExploreTime",
-                                           "GuestApearRate",
-                                           "GuestDropCount",
-                                           "Material_Gain",
-                                           "OpenTime",
-                                           "Rejuvenation",
-                                           "InvitationApearRate",
-                                           "Material_Creation",
-                                           "Material_Fish",
-                                           "Material_Meat",
-                                           "Material_Vegetable",
-                                           "SpecialInvitationRate",
-                                           "GuestAntiqueDropRate"};
+    static std::set<std::string> nameOfTools = {"Stirfry", "Bake", "Boil",
+                                                "Steam",   "Fry",  "Knife"};
+    static std::map<std::string, Skill::Type> typeMap = {
+        {"Partial", PARTIAL}, {"Self", SELF}, {"Next", NEXT}};
+    static std::set<std::string> ignoredSkills = {"Sweet",
+                                                  "Sour",
+                                                  "Salty",
+                                                  "Bitter",
+                                                  "Spicy",
+                                                  "Tasty",
+                                                  "Vegetable",
+                                                  "Meat",
+                                                  "Fish",
+                                                  "Creation",
+                                                  "ExploreTime",
+                                                  "GuestApearRate",
+                                                  "GuestDropCount",
+                                                  "Material_Gain",
+                                                  "OpenTime",
+                                                  "Rejuvenation",
+                                                  "InvitationApearRate",
+                                                  "Material_Creation",
+                                                  "Material_Fish",
+                                                  "Material_Meat",
+                                                  "Material_Vegetable",
+                                                  "SpecialInvitationRate",
+                                                  "GuestAntiqueDropRate"};
     for (auto skillJson : v) {
         int id = skillJson["skillId"].asInt();
-        skillList[id] = Skill();
         for (auto effect : skillJson["effect"]) {
 
             Skill skill;
             std::string conditionStr = effect["condition"].asString();
+            std::string type = effect["type"].asString();
+            if ((missingSkills.count(type)) || (ignoredSkills.count(type))) {
+                continue;
+            }
+            if (skillList.count(id) == 0)
+                skillList[id] = Skill();
             if (conditionStr != "Global") {
-                if (conditionStr == "Partial") {
-                    skillList[id].type = PARTIAL;
-                } else if (conditionStr == "Self") {
-                    skillList[id].type = SELF;
-                } else if (conditionStr == "Next") {
-                    skillList[id].type = NEXT;
+                if (skillList[id].type == UNSET) {
+                    skillList[id].type = typeMap[conditionStr];
+                } else {
+                    assert(skillList[id].type == typeMap[conditionStr]);
                 }
-                std::string type = effect["type"].asString();
+                skill.type = typeMap[conditionStr];
                 int value = effect["value"].asInt();
                 if (type == "Gold_Gain") {
                     skill.pricePercentBuff = value;
@@ -278,52 +287,33 @@ void Skill::loadJson(const Json::Value &v) {
                     // 为啥图鉴网接口时muti而不是multi
                     assert(value % 100 == 0);
                     skill.multiToolEffect = 1 + value / 100;
-                } else if (type == "Stirfry" || type == "Bake" ||
-                           type == "Boil" || type == "Steam" || type == "Fry" ||
-                           type == "Knife") {
+                } else if (nameOfTools.count(type)) {
                     std::string cal = effect["cal"].asString();
-                    int *ptr = NULL;
+                    CookAbility *ptr = NULL;
                     if (cal == "Abs")
-                        ptr = &skill.ability.stirfry;
+                        ptr = &skill.ability;
                     else {
-                        ptr = &skill.cookAbilityPercentBuff.stirfry;
+                        ptr = &skill.cookAbilityPercentBuff;
                     }
-                    int typeBias = getEnum(type) - ABILITY_ENUM_START;
-                    ptr[typeBias] = value;
-                } else if (type == "UseStirfry") {
-                    skill.abilityBuff.stirfry = value;
-                } else if (type == "UseBake") {
-                    skill.abilityBuff.bake = value;
-                } else if (type == "UseBoil") {
-                    skill.abilityBuff.boil = value;
-                } else if (type == "UseSteam") {
-                    skill.abilityBuff.steam = value;
-                } else if (type == "UseFry") {
-                    skill.abilityBuff.fry = value;
-                } else if (type == "UseKnife") {
-                    skill.abilityBuff.knife = value;
-                } else if (type == "UseSweet") {
-                    skill.flavorBuff.sweet = value;
-                } else if (type == "UseSour") {
-                    skill.flavorBuff.sour = value;
-                } else if (type == "UseSalty") {
-                    skill.flavorBuff.salty = value;
-                } else if (type == "UseBitter") {
-                    skill.flavorBuff.bitter = value;
-                } else if (type == "UseSpicy") {
-                    skill.flavorBuff.spicy = value;
-                } else if (type == "UseTasty") {
-                    skill.flavorBuff.tasty = value;
-                } else if (type == "UseVegetable") {
-                    skill.materialBuff.vegetable = value;
-                } else if (type == "UseMeat") {
-                    skill.materialBuff.meat = value;
-                } else if (type == "UseFish") {
-                    skill.materialBuff.fish = value;
-                } else if (type == "UseCreation") {
-                    skill.materialBuff.creation = value;
+                    *(*ptr)[type] = value;
+                } else if (type.starts_with("Use")) {
+                    std::string specificType = type.substr(3);
+                    if (skill.abilityBuff[specificType] != NULL) {
+                        *skill.abilityBuff[specificType] = value;
+                    } else if (skill.flavorBuff[specificType] != NULL) {
+                        *skill.flavorBuff[specificType] = value;
+                    } else if (skill.materialBuff[specificType] != NULL) {
+                        *skill.materialBuff[specificType] = value;
+                    } else {
+                        std::cout
+                            << RED "未知技能：" << skillJson["desc"].asString()
+                            << "（debug代码：" << type << "）" << NO_FORMAT
+                            << std::endl;
+                        exit(1);
+                    }
                 } else if (type == "BasicPrice") {
                     skill.baseAddBuff = value;
+                    assert(effect["cal"].asString() == "Percent");
                 } else if (type == "CookbookPrice") {
                     if (!effect.isMember("conditionType")) {
                         std::cout
@@ -332,11 +322,16 @@ void Skill::loadJson(const Json::Value &v) {
                             << std::endl;
                         exit(1);
                     }
+                } else if (type.starts_with("BasicPriceUse")) {
+                    // e.g.: BasePriceUseStirfry
+                    std::string toolType = type.substr(13);
+                    int *ptr = skill.abilityBaseBuff[toolType];
+                    assert(ptr != NULL);
+                    *ptr = value;
+                    assert(effect["cal"].asString() == "Percent");
                 } else {
-                    if (missingSkills.find(type) == missingSkills.end() &&
-                        ignoredSkills.find(type) == ignoredSkills.end()) {
-                        missingSkills[type] = skillJson["desc"].asString();
-                    }
+                    missingSkills[type] = skillJson["desc"].asString();
+                    continue;
                 }
                 BuffCondition *condition = NULL;
                 if (effect.isMember("conditionType")) {
@@ -357,14 +352,24 @@ void Skill::loadJson(const Json::Value &v) {
                             Recipe::moreThan(cvalue);
                         skill.rarityBuff.masked_add(rarityUpperBound, value);
                     } else if (conditionType == "FewerCookbookNum") {
-                        assert(type == "CookbookPrice");
+                        assert(type == "CookbookPrice" or type == "BasicPrice");
                         DiscretizedBuff::Mask rarityLowerBound =
                             Recipe::lessThan(cvalue);
                         skill.rarityBuff.masked_add(rarityLowerBound, value);
                     } else if (conditionType == "SameSkill") {
                         condition = new ThreeSameCookAbilityBuffCondition();
                     } else if (conditionType == "Rank") {
+                        assert(type == "CookbookPrice");
                         skill.gradeBuff[cvalue] = value;
+                    } else if (conditionType == "ChefTag") {
+                        auto conditionValueList = effect["conditionValueList"];
+                        for (auto tag : conditionValueList) {
+                            skill.chefTagsForPARTIAL.insert(tag.asInt());
+                        }
+                        assert(conditionStr == "Partial");
+                    } else {
+                        missingSkills[conditionType] =
+                            skillJson["desc"].asString();
                     }
                 }
                 if (condition == NULL) {
@@ -382,6 +387,8 @@ void Skill::loadJson(const Json::Value &v) {
     }
 }
 void Chef::addSkill(int id) {
+    if (Skill::skillList.count(id) == 0)
+        return;
     auto skill = Skill::skillList[id];
     if (skill.type == Skill::SELF) {
         *this->skill += skill;
@@ -389,22 +396,12 @@ void Chef::addSkill(int id) {
         *this->companyBuff += skill;
     } else if (skill.type == Skill::NEXT) {
         *this->nextBuff += skill;
+    } else {
+        std::cout << "Skill type is unset for skill " << id << std::endl;
+        exit(1);
     }
 }
 
-// int CookAbility::operator/(const Ability &a) const {
-//     int grade = 5;
-//     const int *thisptr = &this->stirfry;
-//     const int *aptr = &a.stirfry;
-//     for (int i = 0; i < 6; i++) {
-//         if (aptr[i] != 0) {
-//             grade =
-//                 grade < (thisptr[i] / aptr[i]) ? grade : (thisptr[i] /
-//                 aptr[i]);
-//         }
-//     }
-//     return grade;
-// }
 int CookAbility::operator*(const AbilityBuff &a) const {
     int buff = 0;
     const int *thisptr = &this->stirfry;

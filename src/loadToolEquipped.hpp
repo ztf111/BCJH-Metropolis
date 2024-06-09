@@ -249,7 +249,7 @@ CSVWarning loadToolFromFile(Chef *chef, ToolFileType t) {
             } else {
                 throw runtime_error("Too many columns");
             }
-        } catch (runtime_error e) {
+        } catch (runtime_error const &e) {
             j -= 1;
             if (e.what() == string("Float")) {
 

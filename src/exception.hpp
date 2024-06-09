@@ -8,9 +8,7 @@ class NoChefException : public std::exception {
 
   public:
     virtual const char *what() const throw() {
-        if (numChef >= 0) {
-            std::cout << "拥有的厨师太少，当前拥有" << numChef << "个厨师。";
-        }
+        std::cout << "拥有的厨师太少，当前拥有" << numChef << "个厨师。";
         return "拥有的厨师太少，得到的结果可能不理想，建议手动计算。";
     }
     NoChefException(std::size_t numChef = 0) throw() : numChef(numChef) {}

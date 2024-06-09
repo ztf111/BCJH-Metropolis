@@ -18,7 +18,7 @@ class States {
     void getSkills(Skill *skills, FLAG_getCookAbilities flag = DEFAULT);
     const Skill *getCookAbilities(FLAG_getCookAbilities flag = DEFAULT);
     Chef getChef(int i) const { return chefs[i]; }
-    const Chef *const getChefPtr(int i) const { return &chefs[i]; }
+    const Chef *getChefPtr(int i) const { return &chefs[i]; }
     void setChef(int i, const Chef &chef) {
         chefs[i] = chef;
         cookAbilitiesValid = false;

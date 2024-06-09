@@ -35,6 +35,7 @@ enum FlavorEnum {
     FLAVOR_ENUM_END
 };
 int getEnum(const std::string &s);
+std::string getNameByEnum(int e);
 
 enum ToolFileType {
     NOT_LOADED,

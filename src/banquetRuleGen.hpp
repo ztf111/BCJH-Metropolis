@@ -281,7 +281,6 @@ class SingleConditionRule : public Rule {
         : Rule(effect), condition(condition) {}
     void operator()(BanquetRuleTogether *brt, States &s,
                     int overrideDishStart = -1) const override {
-        auto recipes = s.recipe;
         int start = overrideDishStart == -1 ? -1 : overrideDishStart;
         int recipe = (*condition)(s, start);
         if (recipe != -1) {

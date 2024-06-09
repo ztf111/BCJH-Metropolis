@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
     clock_t start, end;
     start = clock();
     int totalScore = 0;
-    int num_threads = std::thread::hardware_concurrency();
+    size_t num_threads = std::thread::hardware_concurrency();
 
     if (!mp) {
         num_threads = 1;
@@ -98,10 +98,10 @@ int main(int argc, char *argv[]) {
     StatesRecorder statesRecorder("states.bin", fileHash, &chefList,
                                   &recipeList);
     auto statesRecord = statesRecorder.get_states(num_threads);
-    for (int i = 0; i < num_threads; i++) {
+    for (size_t i = 0; i < num_threads; i++) {
         futures.push_back(std::async(std::launch::async, run, std::ref(rl),
                                      std::ref(chefList), std::ref(recipeList),
-                                     0, !silent, seed++, i, statesRecord[i]));
+                                     0, !silent, seed++, (int)i, statesRecord[i]));
     }
     int max_score = 0;
     Result result;

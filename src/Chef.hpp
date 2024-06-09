@@ -17,6 +17,7 @@ class Recipe;
 class CList;
 
 class Chef {
+    // This class may be copied intensively, so use pointers within.
   private:
     static CookAbility globalAbilityBuff;
     static int globalAbilityMale;
@@ -34,6 +35,7 @@ class Chef {
     Skill *skill;
     Skill *companyBuff;
     Skill *nextBuff;
+    Tags *tagForCompanyBuff;
     Tool getTool() const { return this->tool; }
     ToolEnum getToolType() const { return this->tool.type; }
     bool allowsTool() const { return this->tool.type != NO_TOOL; }
@@ -78,6 +80,7 @@ class Chef {
         delete this->skill;
         delete this->companyBuff;
         delete this->nextBuff;
+        delete this->tagForCompanyBuff;
     }
     std::string getToolName() const;
     // void updateLearnedRecipe(const RecipesInfo rI) const {

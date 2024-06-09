@@ -4,9 +4,22 @@
 #include "include/json/json.h"
 #include "Values.hpp"
 #include "utils/Printer.hpp"
+#include <set>
+#include <cassert>
 struct Tool {
     ToolEnum type = NOT_EQUIPPED;
     int value = 100;
+};
+class Tags : public std::set<int> {
+  public:
+    Tags() = default;
+    bool intersectsWith(const Tags &t) const {
+        for (auto i : t) {
+            if (this->count(i))
+                return true;
+        }
+        return false;
+    }
 };
 class MaterialCategoryBuff {
   public:
@@ -28,6 +41,21 @@ class MaterialCategoryBuff {
         p.push_back(Printer("鱼", fish));
         p.push_back(Printer("面", creation));
         return p;
+    }
+    int *operator[](std::string name) {
+        if (name == "Vegetable") {
+            return &this->vegetable;
+        }
+        if (name == "Meat") {
+            return &this->meat;
+        }
+        if (name == "Fish") {
+            return &this->fish;
+        }
+        if (name == "Creation") {
+            return &this->creation;
+        }
+        return NULL;
     }
 };
 
@@ -62,6 +90,27 @@ class FlavorBuff {
     int operator*(const FlavorEnum f) const {
         const int *ptr = &this->sweet;
         return ptr[f - FLAVOR_ENUM_START - 1];
+    }
+    int *operator[](std::string name) {
+        if (name == "Sweet") {
+            return &this->sweet;
+        }
+        if (name == "Salty") {
+            return &this->salty;
+        }
+        if (name == "Sour") {
+            return &this->sour;
+        }
+        if (name == "Bitter") {
+            return &this->bitter;
+        }
+        if (name == "Spicy") {
+            return &this->spicy;
+        }
+        if (name == "Tasty") {
+            return &this->tasty;
+        }
+        return NULL;
     }
 };
 class Ability {
@@ -126,6 +175,14 @@ class Ability {
         }
         return count;
     }
+    bool operator==(int a) const {
+        const int *ptr = &this->stirfry;
+        for (int i = 0; i < 6; i++) {
+            if (ptr[i] != a)
+                return false;
+        }
+        return true;
+    }
     void add(const Ability &a) {
         int *thisptr = &this->stirfry;
         const int *aptr = &a.stirfry;
@@ -150,7 +207,7 @@ class Ability {
         return p;
     }
     /* Knife, Stirfry, Bake, Boil, Steam, Fry */
-    const int operator[](int name) {
+    int operator[](int name) {
         if (name == KNIFE) {
             return this->knife;
         }
@@ -171,6 +228,28 @@ class Ability {
         }
         std::cout << "Ability::operator[]: Error: " << name << std::endl;
         exit(1);
+        return -1;
+    }
+    int *operator[](std::string name) {
+        if (name == "Knife") {
+            return &this->knife;
+        }
+        if (name == "Stirfry") {
+            return &this->stirfry;
+        }
+        if (name == "Bake") {
+            return &this->bake;
+        }
+        if (name == "Boil") {
+            return &this->boil;
+        }
+        if (name == "Steam") {
+            return &this->steam;
+        }
+        if (name == "Fry") {
+            return &this->fry;
+        }
+        return NULL;
     }
 };
 
@@ -252,16 +331,19 @@ class DiscretizedBuff {
 
 class BuffCondition;
 class ConditionalBuff;
+
 class Skill {
 
   public:
-    enum Type { SELF, NEXT, PARTIAL };
-    Type type = SELF;
+    enum Type { SELF, NEXT, PARTIAL, UNSET };
+    Type type = UNSET;
+    Tags chefTagsForPARTIAL;
 
     static std::map<int, Skill> skillList;
     CookAbility ability;
     CookAbility cookAbilityPercentBuff;
     AbilityBuff abilityBuff;
+    AbilityBuff abilityBaseBuff;
     FlavorBuff flavorBuff;
     MaterialCategoryBuff materialBuff;
     DiscretizedBuff rarityBuff;
@@ -272,22 +354,10 @@ class Skill {
     int baseAddBuff = 0;
     std::vector<ConditionalBuff *> conditionalEffects;
     Skill() = default;
+    Skill(Type type) : type(type) {}
     Skill getSkill(int id) { return skillList[id]; }
     static void loadJson(const Json::Value &v);
-    void operator+=(const Skill &s) {
-        this->ability.add(s.ability);
-        this->cookAbilityPercentBuff.add(s.cookAbilityPercentBuff);
-        this->abilityBuff.add(s.abilityBuff);
-        this->flavorBuff.add(s.flavorBuff);
-        this->materialBuff.add(s.materialBuff);
-        this->rarityBuff.add(s.rarityBuff);
-        this->gradeBuff.add(s.gradeBuff);
-        this->pricePercentBuff += s.pricePercentBuff;
-        this->baseAddBuff += s.baseAddBuff;
-        this->conditionalEffects.insert(this->conditionalEffects.end(),
-                                        s.conditionalEffects.begin(),
-                                        s.conditionalEffects.end());
-    }
+    void operator+=(const Skill &s);
     Skill operator+(const Skill &s) {
         Skill tmp(*this);
         tmp += s;
@@ -303,6 +373,12 @@ class Skill {
         p.add("金币", this->pricePercentBuff, true);
         p.add("基础售价", this->baseAddBuff, true);
         p.print("", "  ", "\t");
+        if (!(this->abilityBaseBuff == 0)) {
+            Printer p("基础技法加成");
+            p.noValue();
+            p.add(abilityBaseBuff.getPrinters(true));
+            p.print("", "  ", "\t");
+        }
         this->rarityBuff.print("菜品火数加成");
         this->gradeBuff.print("菜品品级加成");
 
@@ -310,8 +386,9 @@ class Skill {
     }
     ~Skill() {} // conditionalEffects should be handled manually.
 };
+
 class Recipe;
-// Records nonconventional buffs
+// Records nonconventional buffs that requires consideration of multiple dishes
 class BuffCondition {
 
   public:

@@ -102,7 +102,8 @@ class Recipe {
     int id;
     int rarity;
     int price;
-    std::map<int, int> materials;
+    // std::map<int, int> materials;
+    Tags tagsForSkills;
     Materials materialCategories;
     CookAbility cookAbility;
     FlavorEnum flavor;

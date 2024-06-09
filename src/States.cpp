@@ -1,5 +1,6 @@
 #include "States.hpp"
 #include "utils/math.hpp"
+#include "Types.hpp"
 double getStatesSkillsTime = 0;
 
 template <typename T> inline void copy(T *dst, const T *src, int n) {
@@ -10,16 +11,21 @@ template <typename T> inline void copy(T *dst, const T *src, int n) {
 
 void mergeSkills(Skill *skillsResult, const Skill *selfSkills,
                  const Skill *companyBuffs, const Skill *nextBuffs,
-                 Chef *chefs) {
+                 Tags *const *tagOfCompanyBuff, const Chef *chefs) {
     for (int i = 0; i < NUM_CHEFS; i++) {
         skillsResult[i] = selfSkills[i];
         skillsResult[i].ability.add(Ability(chefs[i].getTool()));
     }
     // 光环
     for (int g = 0; g < NUM_GUESTS; g++) {
-        for (int i = g * CHEFS_PER_GUEST; i < (g + 1) * CHEFS_PER_GUEST; i++) {
-            for (int j = i; j < (g + 1) * CHEFS_PER_GUEST; j++) {
-                skillsResult[j] += companyBuffs[i];
+        for (int src = g * CHEFS_PER_GUEST; src < (g + 1) * CHEFS_PER_GUEST;
+             src++) {
+            for (int dst = src; dst < (g + 1) * CHEFS_PER_GUEST; dst++) {
+                if (tagOfCompanyBuff[src]->intersectsWith(
+                        *chefs[dst].tagForCompanyBuff) ||
+                    dst == src) {
+                    skillsResult[dst] += companyBuffs[src];
+                }
             }
         }
         for (int i = g * CHEFS_PER_GUEST + 1; i < (g + 1) * CHEFS_PER_GUEST;
@@ -51,21 +57,24 @@ applyConditionBuff(const Skill *const cookAbilitySkill,
     }
 }
 const Skill *States::getCookAbilities(FLAG_getCookAbilities flag) {
+    // Not related to specific dish
     if (cookAbilitiesValid && (flag == DEFAULT)) {
         return cookAbilitiesCache;
     }
     Skill selfSkills[NUM_CHEFS];
     Skill companySkills[NUM_CHEFS];
     Skill nextSkills[NUM_CHEFS];
+    Tags *tagOfCompanyBuff[NUM_CHEFS];
     for (int i = 0; i < NUM_CHEFS; i++) {
         selfSkills[i] = *chefs[i].skill;
         companySkills[i] = *chefs[i].companyBuff;
         nextSkills[i] = *chefs[i].nextBuff;
+        tagOfCompanyBuff[i] = &chefs[i].companyBuff->chefTagsForPARTIAL;
     }
     cookAbilitiesValid = true;
 
     mergeSkills(cookAbilitiesCache, selfSkills, companySkills, nextSkills,
-                chefs);
+                tagOfCompanyBuff, chefs);
     return cookAbilitiesCache;
 }
 
@@ -83,13 +92,16 @@ void States::getSkills(Skill *skills, FLAG_getCookAbilities flag) {
 #endif
         return;
     }
+    // Skills needs to be copied to test conditional effects
     Skill selfSkills[NUM_CHEFS];
     Skill companySkills[NUM_CHEFS];
     Skill nextSkills[NUM_CHEFS];
+    Tags *tagOfCompanyBuff[NUM_CHEFS];
     for (int i = 0; i < NUM_CHEFS; i++) {
         selfSkills[i] = *chefs[i].skill;
         companySkills[i] = *chefs[i].companyBuff;
         nextSkills[i] = *chefs[i].nextBuff;
+        tagOfCompanyBuff[i] = &chefs[i].companyBuff->chefTagsForPARTIAL;
     }
     auto skillsPreview = getCookAbilities(flag);
     for (int i = 0; i < NUM_CHEFS; i++) {
@@ -103,7 +115,8 @@ void States::getSkills(Skill *skills, FLAG_getCookAbilities flag) {
                            chefs[i].nextBuff->conditionalEffects,
                            nextSkills + i, recipe + i * DISH_PER_CHEF);
     }
-    mergeSkills(skills, selfSkills, companySkills, nextSkills, chefs);
+    mergeSkills(skills, selfSkills, companySkills, nextSkills, tagOfCompanyBuff,
+                chefs);
 
 #ifdef MEASURE_TIME
     clock_gettime(CLOCK_MONOTONIC, &end);

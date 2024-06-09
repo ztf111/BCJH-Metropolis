@@ -1,31 +1,28 @@
 #include "Values.hpp"
 #include <string>
+#include <map>
 
 int getEnum(const std::string &s) {
-    if (s == "Stirfry") {
-        return STIRFRY;
-    } else if (s == "Bake") {
-        return BAKE;
-    } else if (s == "Fry") {
-        return FRY;
-    } else if (s == "Boil") {
-        return BOIL;
-    } else if (s == "Steam") {
-        return STEAM;
-    } else if (s == "Knife") {
-        return KNIFE;
-    } else if (s == "Sweet") {
-        return SWEET;
-    } else if (s == "Sour") {
-        return SOUR;
-    } else if (s == "Bitter") {
-        return BITTER;
-    } else if (s == "Tasty") {
-        return TASTY;
-    } else if (s == "Spicy") {
-        return SPICY;
-    } else if (s == "Salty") {
-        return SALTY;
+    static const std::map<std::string, int> enumMap = {
+        {"Stirfry", STIRFRY}, {"Bake", BAKE},   {"Fry", FRY},
+        {"Boil", BOIL},       {"Steam", STEAM}, {"Knife", KNIFE},
+        {"Sweet", SWEET},     {"Sour", SOUR},   {"Bitter", BITTER},
+        {"Tasty", TASTY},     {"Spicy", SPICY}, {"Salty", SALTY}};
+    auto it = enumMap.find(s);
+    if (it != enumMap.end()) {
+        return it->second;
     }
     return -1;
+}
+std::string getNameByEnum(int e) {
+    static const std::map<int, std::string> enumMap = {
+        {STIRFRY, "Stirfry"}, {BAKE, "Bake"},   {FRY, "Fry"},
+        {BOIL, "Boil"},       {STEAM, "Steam"}, {KNIFE, "Knife"},
+        {SWEET, "Sweet"},     {SOUR, "Sour"},   {BITTER, "Bitter"},
+        {TASTY, "Tasty"},     {SPICY, "Spicy"}, {SALTY, "Salty"}};
+    auto it = enumMap.find(e);
+    if (it != enumMap.end()) {
+        return it->second;
+    }
+    return "Unknown";
 }
