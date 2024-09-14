@@ -312,9 +312,41 @@ void Skill::loadJson(const Json::Value &v) {
                         exit(1);
                     }
                 } else if (type == "BasicPrice") {
-                    skill.baseAddBuff = value;
                     assert(effect["cal"].asString() == "Percent");
+                    if (!effect.isMember("conditionType")) {
+                        // 菜谱基础售价
+                        // 下位上场厨师基础售价
+                        skill.baseAddBuff = value;
+                    } else {
+                        std::string conditionType =
+                            effect["conditionType"].asString();
+                        if (conditionType == "SameSkill" ||
+                            conditionType == "PerRank" ||
+                            conditionType == "FewerCookbookNum" ||
+                            conditionType == "ExcessCookbookNum" ||
+                            conditionType == "CookbookRarity") {
+
+                            // Conditional Buff:
+                            // 每制作一种神级料理菜谱基础售价
+                            // 制作三种同技法料理在场基础售价
+
+                            // Field in Skill designated:
+                            // 制作小于22份的料理该料理基础售价 FewerCookbookNum
+                            // 制作一二火料理基础售价
+
+                            // Save for later
+                        } else {
+                            std::cout << RED "未知技能："
+                                      << skillJson["desc"].asString()
+                                      << "conditionType: " << conditionType
+                                      << " with type: " << type;
+                            // Not implemented:
+                            // 使用水果的料理基础售价 CookbookTag
+                        }
+                    }
+
                 } else if (type == "CookbookPrice") {
+                    // Handled later
                     if (!effect.isMember("conditionType")) {
                         std::cout
                             << RED "未知技能：" << skillJson["desc"].asString()
@@ -340,22 +372,46 @@ void Skill::loadJson(const Json::Value &v) {
                     if (effect.isMember("conditionValue"))
                         cvalue = getInt(effect["conditionValue"]);
                     if (conditionType == "CookbookRarity") {
-                        assert(type == "CookbookPrice");
-                        for (auto &i : effect["conditionValueList"]) {
-                            skill.rarityBuff[getInt(i)] = value;
+                        if (type == "BasicPrice" || type == "CookbookPrice") {
+                            DiscretizedBuff *targetBuff = NULL;
+                            if (type == "BasicPrice") {
+                                targetBuff = &skill.rarityBaseBuff;
+                            } else if (type == "CookbookPrice") {
+                                targetBuff = &skill.rarityBuff;
+                            }
+                            for (auto &i : effect["conditionValueList"]) {
+                                (*targetBuff)[getInt(i)] = value;
+                            }
+                        } else {
+                            std::cout << RED "未知技能："
+                                      << skillJson["desc"].asString()
+                                      << "conditionType: " << conditionType
+                                      << " with type: " << type;
                         }
                     } else if (conditionType == "PerRank") {
                         condition = new GradeBuffCondition(cvalue);
                     } else if (conditionType == "ExcessCookbookNum") {
-                        assert(type == "CookbookPrice");
+                        assert(type == "CookbookPrice" || type == "BasicPrice");
+                        DiscretizedBuff *targetBuff = NULL;
+                        if (type == "BasicPrice") {
+                            targetBuff = &skill.rarityBaseBuff;
+                        } else if (type == "CookbookPrice") {
+                            targetBuff = &skill.rarityBuff;
+                        }
                         DiscretizedBuff::Mask rarityUpperBound =
                             Recipe::moreThan(cvalue);
-                        skill.rarityBuff.masked_add(rarityUpperBound, value);
+                        targetBuff->masked_add(rarityUpperBound, value);
                     } else if (conditionType == "FewerCookbookNum") {
-                        assert(type == "CookbookPrice" or type == "BasicPrice");
-                        DiscretizedBuff::Mask rarityLowerBound =
+                        assert(type == "CookbookPrice" || type == "BasicPrice");
+                        DiscretizedBuff *targetBuff = NULL;
+                        if (type == "BasicPrice") {
+                            targetBuff = &skill.rarityBaseBuff;
+                        } else if (type == "CookbookPrice") {
+                            targetBuff = &skill.rarityBuff;
+                        }
+                        DiscretizedBuff::Mask rarityUpperBound =
                             Recipe::lessThan(cvalue);
-                        skill.rarityBuff.masked_add(rarityLowerBound, value);
+                        targetBuff->masked_add(rarityUpperBound, value);
                     } else if (conditionType == "SameSkill") {
                         condition = new ThreeSameCookAbilityBuffCondition();
                     } else if (conditionType == "Rank") {

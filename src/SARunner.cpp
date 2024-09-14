@@ -83,7 +83,8 @@ States SARunner::generateStates(const CList *chefList, Chef *chefs[NUM_CHEFS]) {
                      count < RANDOM_SEARCH_TIMEOUT * RANDOM_SEARCH_TIMEOUT);
             s.recipe[r] = newRecipe;
             if (count >= RANDOM_SEARCH_TIMEOUT * RANDOM_SEARCH_TIMEOUT) {
-                std::cout << NoRecipeException().what() << std::endl;
+                std::cout << NoRecipeException(recipeList->size()).what()
+                          << std::endl;
                 exit(1);
             }
             r++;

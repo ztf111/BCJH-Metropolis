@@ -25,6 +25,7 @@ void Skill::operator+=(const Skill &s) {
     this->flavorBuff.add(s.flavorBuff);
     this->materialBuff.add(s.materialBuff);
     this->rarityBuff.add(s.rarityBuff);
+    this->rarityBaseBuff.add(s.rarityBaseBuff);
     this->gradeBuff.add(s.gradeBuff);
     this->pricePercentBuff += s.pricePercentBuff;
     this->baseAddBuff += s.baseAddBuff;

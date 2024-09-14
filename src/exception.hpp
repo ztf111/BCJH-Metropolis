@@ -15,12 +15,13 @@ class NoChefException : public std::exception {
 };
 class NoRecipeException : public std::exception {
   public:
+    std::size_t numRecipe;
     virtual const char *what() const throw() {
-
+        std::cout << "拥有的菜谱太少，当前拥有" << numRecipe << "个菜谱。";
         return "拥有的菜谱太少，得到的结果可能不理想，建议手动计算。";
 
     }
-    NoRecipeException() throw() {}
+    NoRecipeException(std::size_t numRecipe) throw() : numRecipe(numRecipe) {}
 };
 class FileNotExistException : public std::exception {
   public:

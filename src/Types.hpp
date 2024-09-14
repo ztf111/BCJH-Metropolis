@@ -338,7 +338,7 @@ class Skill {
     enum Type { SELF, NEXT, PARTIAL, UNSET };
     Type type = UNSET;
     Tags chefTagsForPARTIAL;
-
+    // Whenever a new member is added, remember to update the add function.
     static std::map<int, Skill> skillList;
     CookAbility ability;
     CookAbility cookAbilityPercentBuff;
@@ -347,6 +347,7 @@ class Skill {
     FlavorBuff flavorBuff;
     MaterialCategoryBuff materialBuff;
     DiscretizedBuff rarityBuff;
+    DiscretizedBuff rarityBaseBuff;
     DiscretizedBuff gradeBuff; // 几级就填当前那一级，比它高的不用填。
     int multiToolEffect = 1;   // 1: 正常, 2: 翻倍
 
