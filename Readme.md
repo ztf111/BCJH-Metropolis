@@ -1,6 +1,7 @@
 # 基于模拟退火的爆炒江湖宴会计算器
 
-![](https://img.shields.io/github/downloads/hjenryin/BCJH-Metropolis/total) ![](https://img.shields.io/github/forks/hjenryin/BCJH-Metropolis) ![](https://img.shields.io/github/stars/hjenryin/BCJH-Metropolis)
+![](https://img.shields.io/github/downloads/hjenryin/BCJH-Metropolis/total) 
+![](https://img.shields.io/github/stars/hjenryin/BCJH-Metropolis)
 
 ## 在线运行
 
