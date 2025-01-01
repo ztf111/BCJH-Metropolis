@@ -46,13 +46,17 @@ std::string decodeUnicodeEscape(const std::string &input) {
 }
 
 int main() {
-    auto str = runjs(userData_CONST, ruleData_CONST, 3170000, 50, 10, true);
+    auto str = runjs(
+        userData_CONST, ruleData_CONST, 3170000, 50, 10, true,
+        "PgEAAA4EAAADAwAAiQQAAMECAACSBAAABwAAADwAAAACAAAAZAAAAAEAAAAAAAAABQAAAG"
+        "QAAAAEAAAAZAAAAAEAAAAAAAAAQwAAAFkAAAB4AgAAiwAAAHcCAAABAgAADQAAAHkCAAAy"
+        "AAAA9gEAAHoCAAASAAAAIAEAAPwBAABFAAAAXgAAADICAAD4AQAA");
     // encode all unicodes in the string
     str = decodeUnicodeEscape(str);
     std::cout << str << std::endl;
 
-    std::string input = "\\u968f\\u673"; // Your input string
-    std::string decoded = decodeUnicodeEscape(input);
-    std::cout << "Decoded string: " << decoded << std::endl;
+    // std::string input = "\\u968f\\u673"; // Your input string
+    // std::string decoded = decodeUnicodeEscape(input);
+    // std::cout << "Decoded string: " << decoded << std::endl;
     return 0;
 }

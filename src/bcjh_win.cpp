@@ -95,8 +95,8 @@ int main(int argc, char *argv[]) {
 
     std::vector<std::future<Result>> futures;
 
-    StatesRecorder statesRecorder("states.txt", fileHash, &chefList,
-                                  &recipeList);
+    StatesRecorderFile statesRecorder("states.txt", fileHash, &chefList,
+                                      &recipeList);
     auto statesRecord = statesRecorder.get_states(num_threads);
     for (size_t i = 0; i < num_threads; i++) {
         futures.push_back(std::async(std::launch::async, run, std::ref(rl),

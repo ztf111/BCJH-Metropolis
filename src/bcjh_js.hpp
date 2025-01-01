@@ -37,11 +37,15 @@ class ResultJsonSerializable {
     int seed;
     const States state;
     std::string logs;
+    std::string recover_str;
     ResultJsonSerializable(int score, int seed, States state, std::string &logs)
         : score(score), seed(seed), state(state), logs(logs) {}
     ResultJsonSerializable(Result &result)
         : score(result.score), seed(result.seed), state(result.state),
           logs(result.logs) {}
+    ResultJsonSerializable(Result &result, std::string &recover_str)
+        : score(result.score), seed(result.seed), state(result.state),
+          logs(result.logs), recover_str(recover_str) {}
     Json::String toJson() {
         Json::Value result;
         result["score"] = score;
@@ -57,6 +61,7 @@ class ResultJsonSerializable {
         }
         result["recipes"] = recipesList;
         result["logs"] = logs;
+        result["recover_str"] = recover_str;
         return result.toStyledString();
     }
 };
@@ -64,13 +69,22 @@ class ResultJsonSerializable {
  * @return  pair<Json::Value gameData, Json::Value userData>
  */
 std::pair<Json::Value, Json::Value> loadJson(std::stringstream &userDataSs);
+
+/**
+ * @brief This exposes the `run` function to JavaScript
+ * @param recover_string
+ * `recover_str` from the previous result can be input here, so the next run
+ * will continue from the previous state.
+ * @return A dict, with keys "chefs", "logs", "recipes", "recover_str", "score",
+ * "seed".
+ */
 std::string
 #ifdef EMSCRIPTEN
     EMSCRIPTEN_KEEPALIVE
 #endif
     runjs(const std::string &userDataIn, const std::string &ruleDataIn,
           int targetScore, int iterChef = 5000, int iterRecipe = 1000,
-          bool allowTool = true
+          bool allowTool = true, const std::string &recover_string = ""
 #ifdef EMSCRIPTEN_PROGRESS
           ,
           emscripten::val postProgress = emscripten::val::null()

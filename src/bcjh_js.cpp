@@ -18,6 +18,7 @@
 #include <vector>
 #include "bcjh_js.hpp"
 #include "run.hpp"
+#include "StatesRecorder.hpp"
 #ifdef EMSCRIPTEN
 #include <emscripten/bind.h>
 using namespace emscripten;
@@ -58,7 +59,8 @@ std::string
     EMSCRIPTEN_KEEPALIVE
 #endif
     runjs(const std::string &userDataIn, const std::string &ruleDataIn,
-          int targetScore, int iterChef, int iterRecipe, bool allowTool
+          int targetScore, int iterChef, int iterRecipe, bool allowTool,
+          const std::string &recover_string
 #ifdef EMSCRIPTEN_PROGRESS
           ,
           emscripten::val postProgress
@@ -101,14 +103,15 @@ std::string
     // Count time used
     clock_t start, end;
     start = clock();
-
+    StatesRecorderString statesRecorder(recover_string, &chefList, &recipeList);
+    auto stateResumed = statesRecorder.get_states(1)[0];
     Result result = run(rl, chefList, recipeList, 0, true, seed
 #ifdef EMSCRIPTEN_PROGRESS
                         ,
-                        postProgress
+                        postProgress = postProgress
 #endif
-
-    );
+                        ,
+                        -1, stateResumed);
     std::cout << "run finished" << std::endl;
     log += ORDINARY;
     // Redirects std::cout
@@ -129,6 +132,8 @@ std::string
     // Restore std::cout
     std::cout.rdbuf(oldCoutStreamBuf);
     result.logs = ss.str();
+    statesRecorder.add_state(&result.state);
+    auto recover_str = statesRecorder.get_encoded_states();
 #ifdef MEASURE_TIME
     std::cout << "randomRecipeTime: " << randomRecipeTime << std::endl;
     std::cout << "randomChefTime: " << randomChefTime << std::endl;
@@ -140,7 +145,7 @@ std::string
               << calculatePriceTimeOut << std::endl;
 #endif
 
-    auto resultStr = ResultJsonSerializable(result).toJson();
+    auto resultStr = ResultJsonSerializable(result, recover_str).toJson();
     for (auto &chef : chefList) {
         chef.deletePointers();
     }
