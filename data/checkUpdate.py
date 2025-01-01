@@ -1,6 +1,7 @@
 # coding=utf8
 import os
 import json
+# run from root directory
 
 print("正在检查更新...")
 ret = os.system(

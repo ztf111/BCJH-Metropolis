@@ -77,6 +77,8 @@
 - 支持更多技能、优化部分技能[^1]。相应的，计算时间也会变长，目前看来变长2~6倍不等，取决于有多少厨师有复杂技能[^2]。
 - 计算器各线程进度条。
 - 暂时取消完成搜索之后的手动优化。也就是说，计算器给出的结果可能还有简单的优化空间（如改一个菜、改一个厨师这种）。
+
+[1.3.0]: https://github.com/hjenryin/BCJH-Metropolis/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/hjenryin/BCJH-Metropolis/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/hjenryin/BCJH-Metropolis/compare/v1.1.3...v1.2.0
 [1.1.3]: https://github.com/hjenryin/BCJH-Metropolis/compare/v1.1.2...v1.1.3

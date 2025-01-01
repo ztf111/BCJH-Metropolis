@@ -2,6 +2,7 @@ import argparse
 import os
 import requests
 import platform
+# run from data/
 
 args=argparse.ArgumentParser()
 args.add_argument('-i', '--id',type=int)
