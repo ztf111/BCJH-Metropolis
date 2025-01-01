@@ -260,7 +260,8 @@ void Skill::loadJson(const Json::Value &v) {
                                                   "Material_Meat",
                                                   "Material_Vegetable",
                                                   "SpecialInvitationRate",
-                                                  "GuestAntiqueDropRate"};
+                                                  "GuestAntiqueDropRate",
+                                                  "MaterialReduce"};
     for (auto skillJson : v) {
         int id = skillJson["skillId"].asInt();
         for (auto effect : skillJson["effect"]) {
@@ -305,11 +306,9 @@ void Skill::loadJson(const Json::Value &v) {
                     } else if (skill.materialBuff[specificType] != NULL) {
                         *skill.materialBuff[specificType] = value;
                     } else {
-                        std::cout
-                            << RED "未知技能：" << skillJson["desc"].asString()
-                            << "（debug代码：" << type << "）" << NO_FORMAT
-                            << std::endl;
-                        exit(1);
+                        throw UnknownSkillException(
+                            skillJson["desc"].asString() + "（debug代码：" +
+                            type + ")");
                     }
                 } else if (type == "BasicPrice") {
                     assert(effect["cal"].asString() == "Percent");
@@ -336,10 +335,10 @@ void Skill::loadJson(const Json::Value &v) {
 
                             // Save for later
                         } else {
-                            std::cout << RED "未知技能："
-                                      << skillJson["desc"].asString()
-                                      << "conditionType: " << conditionType
-                                      << " with type: " << type;
+                            UnknownSkillWarning(
+                                skillJson["desc"].asString() +
+                                "conditionType: " + conditionType +
+                                " with type: " + type);
                             // Not implemented:
                             // 使用水果的料理基础售价 CookbookTag
                         }
@@ -348,18 +347,23 @@ void Skill::loadJson(const Json::Value &v) {
                 } else if (type == "CookbookPrice") {
                     // Handled later
                     if (!effect.isMember("conditionType")) {
-                        std::cout
-                            << RED "未知技能：" << skillJson["desc"].asString()
-                            << "（debug代码：" << type << "）" << NO_FORMAT
-                            << std::endl;
-                        exit(1);
+                        UnknownSkillException(skillJson["desc"].asString() +
+                                              "（debug代码：" + type + ")");
                     }
                 } else if (type.starts_with("BasicPriceUse")) {
                     // e.g.: BasePriceUseStirfry
-                    std::string toolType = type.substr(13);
-                    int *ptr = skill.abilityBaseBuff[toolType];
-                    assert(ptr != NULL);
-                    *ptr = value;
+                    std::string type_name = type.substr(13);
+                    if (skill.abilityBaseBuff[type_name] != NULL) {
+                        *skill.abilityBaseBuff[type_name] = value;
+                    } else if (skill.flavorBaseBuff[type_name] != NULL) {
+                        *skill.flavorBaseBuff[type_name] = value;
+                    } else if (skill.materialBaseBuff[type_name] != NULL) {
+                        *skill.materialBaseBuff[type_name] = value;
+                    } else {
+                        throw UnknownSkillException(
+                            skillJson["desc"].asString() + "（debug代码：" +
+                            type + ")");
+                    }
                     assert(effect["cal"].asString() == "Percent");
                 } else {
                     missingSkills[type] = skillJson["desc"].asString();
@@ -383,10 +387,10 @@ void Skill::loadJson(const Json::Value &v) {
                                 (*targetBuff)[getInt(i)] = value;
                             }
                         } else {
-                            std::cout << RED "未知技能："
-                                      << skillJson["desc"].asString()
-                                      << "conditionType: " << conditionType
-                                      << " with type: " << type;
+                            UnknownSkillWarning(
+                                skillJson["desc"].asString() +
+                                "conditionType: " + conditionType +
+                                " with type: " + type);
                         }
                     } else if (conditionType == "PerRank") {
                         condition = new GradeBuffCondition(cvalue);
@@ -438,8 +442,7 @@ void Skill::loadJson(const Json::Value &v) {
         }
     }
     for (auto pair : missingSkills) {
-        std::cout << RED "未知技能：" << pair.second << "（debug代码："
-                  << pair.first << "）" << NO_FORMAT << std::endl;
+        UnknownSkillWarning(pair.second + "（debug代码：" + pair.first + "）");
     }
 }
 void Chef::addSkill(int id) {

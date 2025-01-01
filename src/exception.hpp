@@ -31,5 +31,27 @@ class FileNotExistException : public std::exception {
     }
     FileNotExistException() throw() {}
 };
+class UnknownSkillException : public std::exception {
+  public:
+    std::string description;
+    virtual const char *what() const throw() {
+        std::cout << "未知技能  " << RED << description << NO_FORMAT
+                  << std::endl;
+        return "未知技能。";
+    }
+    UnknownSkillException() throw() {}
+    UnknownSkillException(std::string error_description) throw()
+        : description(error_description) {}
+};
+class UnknownSkillWarning {
+  public:
+    std::string description;
+    UnknownSkillWarning() {}
+    UnknownSkillWarning(std::string error_description)
+        : description(error_description) {
+        std::cerr << RED << "未知技能：   " << description << NO_FORMAT
+                  << std::endl;
+    }
+};
 #define RANDOM_SEARCH_TIMEOUT 100
 #endif

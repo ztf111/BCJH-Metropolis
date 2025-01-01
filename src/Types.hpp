@@ -345,7 +345,9 @@ class Skill {
     AbilityBuff abilityBuff;
     AbilityBuff abilityBaseBuff;
     FlavorBuff flavorBuff;
+    FlavorBuff flavorBaseBuff;
     MaterialCategoryBuff materialBuff;
+    MaterialCategoryBuff materialBaseBuff;
     DiscretizedBuff rarityBuff;
     DiscretizedBuff rarityBaseBuff;
     DiscretizedBuff gradeBuff; // 几级就填当前那一级，比它高的不用填。
@@ -378,6 +380,8 @@ class Skill {
             Printer p("基础技法加成");
             p.noValue();
             p.add(abilityBaseBuff.getPrinters(true));
+            p.add(flavorBaseBuff.getPrinters());
+            p.add(materialBaseBuff.getPrinters());
             p.print("", "  ", "\t");
         }
         this->rarityBuff.print("菜品火数加成");

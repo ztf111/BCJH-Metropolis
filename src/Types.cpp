@@ -23,7 +23,9 @@ void Skill::operator+=(const Skill &s) {
     this->abilityBuff.add(s.abilityBuff);
     this->abilityBaseBuff.add(s.abilityBaseBuff);
     this->flavorBuff.add(s.flavorBuff);
+    this->flavorBaseBuff.add(s.flavorBaseBuff);
     this->materialBuff.add(s.materialBuff);
+    this->materialBaseBuff.add(s.materialBaseBuff);
     this->rarityBuff.add(s.rarityBuff);
     this->rarityBaseBuff.add(s.rarityBaseBuff);
     this->gradeBuff.add(s.gradeBuff);
@@ -32,13 +34,19 @@ void Skill::operator+=(const Skill &s) {
     this->conditionalEffects.insert(this->conditionalEffects.end(),
                                     s.conditionalEffects.begin(),
                                     s.conditionalEffects.end());
-    if (this->type == PARTIAL || this->type == UNSET) {
+    if (this->type == PARTIAL) {
         // PARTIAL: loading from json
-        // UNSET: load to empty skill in chef
-        assert(this->chefTagsForPARTIAL.size() == 0);
+        // It's possible that in data.min.json, a skill has multiple effects
+        // pointing at the same Tag.
+        if (this->chefTagsForPARTIAL.size()) {
+            assert(s.chefTagsForPARTIAL == this->chefTagsForPARTIAL);
+        }
         this->chefTagsForPARTIAL = s.chefTagsForPARTIAL;
     }
     if (this->type == UNSET) {
+        // UNSET: load to empty skill in chef
+        assert(this->chefTagsForPARTIAL.size() == 0);
+        this->chefTagsForPARTIAL = s.chefTagsForPARTIAL;
         this->type = s.type;
     }
     if (this->type == PARTIAL || this->type == NEXT) {

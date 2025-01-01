@@ -27,8 +27,8 @@ std::tuple<Json::Value, Json::Value, Json::Value, std::size_t> loadJsonFiles();
 
 void parseArgs(int argc, char *argv[], bool &silent, int &log, bool &mp,
                int &seed, int &iterChef, int &iterRecipe) {
-    iterChef = 5000;
-    iterRecipe = 1000;
+    iterChef = 50;
+    iterRecipe = 10;
     silent = false;
     log = 0;
     seed = (int)(time(NULL) * 100);
@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
 
     std::vector<std::future<Result>> futures;
 
-    StatesRecorder statesRecorder("states.bin", fileHash, &chefList,
+    StatesRecorder statesRecorder("states.txt", fileHash, &chefList,
                                   &recipeList);
     auto statesRecord = statesRecorder.get_states(num_threads);
     for (size_t i = 0; i < num_threads; i++) {
