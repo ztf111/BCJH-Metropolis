@@ -13,6 +13,8 @@
 #include "../config.hpp"
 #include "utils/json.hpp"
 #include <map>
+#include <memory> // Include for shared_ptr
+
 class Recipe;
 class CList;
 
@@ -34,15 +36,16 @@ class Chef {
     bool male;
     bool female;
     int id;
-    Skill *skill;
-    Skill *companyBuff;
-    Skill *nextBuff;
-    Tags *tagForCompanyBuff;
+    std::shared_ptr<Skill> skill;
+    std::shared_ptr<Skill> companyBuff;
+    std::shared_ptr<Skill> nextBuff;
+    std::shared_ptr<Tags> tagForCompanyBuff;
     Tool getTool() const { return this->tool; }
     ToolEnum getToolType() const { return this->tool.type; }
     bool allowsTool() const { return this->tool.type != NO_TOOL; }
     void setNoTool() { this->tool.type = NO_TOOL; }
-    std::vector<Recipe *> *recipeLearned = NULL;
+    std::shared_ptr<std::vector<std::shared_ptr<Recipe>>> recipeLearned =
+        nullptr;
 
     static void setGlobalBuff(CookAbility buff) { globalAbilityBuff = buff; }
     static void setGlobalAbilityMale(int ability) {
@@ -79,10 +82,10 @@ class Chef {
     void modifyTool(Tool);
     void modifyTool(ToolEnum);
     void deletePointers() {
-        delete this->skill;
-        delete this->companyBuff;
-        delete this->nextBuff;
-        delete this->tagForCompanyBuff;
+        skill.reset();
+        companyBuff.reset();
+        nextBuff.reset();
+        tagForCompanyBuff.reset();
     }
     std::string getToolName() const;
 };

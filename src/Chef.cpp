@@ -124,10 +124,10 @@ Chef::Chef(Json::Value &chef, int ultimateSkillId)
     if (chef.isMember("chefId") && chef.isMember("name") &&
         chef.isMember("skill")) {
 
-        this->skill = new Skill(Skill::SELF);
-        this->companyBuff = new Skill(Skill::PARTIAL);
-        this->nextBuff = new Skill(Skill::NEXT);
-        this->tagForCompanyBuff = new Tags();
+        this->skill = std::make_shared<Skill>(Skill::SELF);
+        this->companyBuff = std::make_shared<Skill>(Skill::PARTIAL);
+        this->nextBuff = std::make_shared<Skill>(Skill::NEXT);
+        this->tagForCompanyBuff = std::make_shared<Tags>();
         this->skill->ability = CookAbility(chef);
         if (chef.isMember("tags") && chef["tags"].isArray()) {
             auto tags = chef["tags"];
