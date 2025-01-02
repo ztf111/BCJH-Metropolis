@@ -46,13 +46,25 @@ std::string decodeUnicodeEscape(const std::string &input) {
 }
 
 int main() {
-    auto str = runjs(
-        userData_CONST, ruleData_CONST, 3170000, 0, 0, true,
-        "PgEAAA4EAAADAwAAiQQAAMECAACSBAAABwAAADwAAAACAAAAZAAAAAEAAAAAAAAABQAAAG"
-        "QAAAAEAAAAZAAAAAEAAAAAAAAAQwAAAFkAAAB4AgAAiwAAAHcCAAABAgAADQAAAHkCAAAy"
-        "AAAA9gEAAHoCAAASAAAAIAEAAPwBAABFAAAAXgAAADICAAD4AQAA");
+    auto str =
+        runjs(userData_CONST, ruleData_CONST, 3170000, 0, 0, true,
+              "MAMAAAYDAACeBAAA8wMAABoEAADiAgAABwAAAGQAAAAHAAAAPAAAAAEAAAAAAAAA"
+              "BwAAAAAAAAADAAAAAAAAAAcAAAA8AAAAjQAAABABAAB7AAAAeQIAAJMAAAC+"
+              "AAAANAAAAMcAAAAUAAAAMgAAAHoCAABUAAAAkgIAAF0BAABdAAAAZgAAAHMCAABZ"
+              "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+    // "气仙人-切(100)",
+    // "李清凝-切(60)",
+    // "裘小白",
+    // "贺岁老君",
+    // "白发小黑",
+    // "黑鸦-切(60)"
+    Json::Value json;
+    std::stringstream ss(str);
+    ss >> json;
+    json.removeMember("logs");
+    auto str2 = json.toStyledString();
     // encode all unicodes in the string
-    str = decodeUnicodeEscape(str);
+    str = decodeUnicodeEscape(str2);
     std::cout << str << std::endl;
 
     // std::string input = "\\u968f\\u673"; // Your input string

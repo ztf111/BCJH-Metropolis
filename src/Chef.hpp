@@ -26,6 +26,8 @@ class Chef {
     Tool tool;
     static ToolFileType toolFileType;
     std::string name;
+    // friend struct GlobalAbilityBuff;
+    friend class StatesSerializer;
 
   public:
     static bool coinBuffOn;
@@ -83,28 +85,6 @@ class Chef {
         delete this->tagForCompanyBuff;
     }
     std::string getToolName() const;
-    // void updateLearnedRecipe(const RecipesInfo rI) const {
-    //     auto &recipesLearned = *this->recipesLearned;
-    //     auto worst = recipesLearned.end();
-    //     int worstPrice = rI.score;
-    //     int count = 0;
-    //     for (auto iter = recipesLearned.begin(); iter < recipesLearned.end();
-    //          iter++) {
-    //         if ((iter->full == rI.full) && (iter->score < worstPrice)) {
-    //             worst = iter;
-    //             worstPrice = iter->score;
-    //             count++;
-    //         } else if ((iter->full == rI.full) && (iter->score == rI.score))
-    //         {
-    //             return;
-    //         }
-    //     }
-    //     if (count < RECIPE_CACHE) {
-    //         recipesLearned.push_back(rI);
-    //     } else if (worst != recipesLearned.end()) {
-    //         *worst = rI;
-    //     }
-    // }
 };
 class CList : public std::vector<Chef> {
     std::map<int, int> id2index;

@@ -1,1 +1,1 @@
-add_library (jsoncpp jsoncpp.cpp)	
+# add_library(jsoncpp jsoncpp.cpp)	
