@@ -40,19 +40,31 @@ SARunner::SARunner(const RuleInfo *rl, const CList *chefList, RList *recipeList,
 #endif
 }
 
-States SARunner::generateStates(const CList *chefList, Chef *chefs[NUM_CHEFS]) {
+States SARunner::generateStates(States *initState, const CList *chefList) {
     States s;
 
-        // << std::endl;
-    if (chefs == NULL) {
+    auto allChefsId = std::set<int>();
+    for (size_t i = 0; i < chefList->size(); i++) {
+        allChefsId.insert(chefList->at(i).id);
+    }
 
-        for (int j = 0; j < NUM_CHEFS; j++) {
+    for (int j = 0; j < NUM_CHEFS; j++) {
+        if (initState != NULL &&
+            allChefsId.contains(initState->getChefPtr(j)->id) &&
+            !s.repeatedChef(initState->getChefPtr(j), j, j)) {
+            Chef chef = chefList->byId(initState->getChefPtr(j)->id);
+            if (Tool::allowTool) {
+                chef.modifyTool(initState->getToolType(j));
+            }
+            s.setChef(j, chef);
+        } else {
             int count = 0;
             const Chef *randomChef;
             do {
                 randomChef = &chefList->at(rand() % chefList->size());
                 s.setChef(j, *randomChef);
                 count++;
+
             } while (s.repeatedChef(randomChef, j) &&
                      count < RANDOM_SEARCH_TIMEOUT);
             if (count >= RANDOM_SEARCH_TIMEOUT) {
@@ -60,38 +72,45 @@ States SARunner::generateStates(const CList *chefList, Chef *chefs[NUM_CHEFS]) {
                 exit(1);
             }
         }
-
-    } else {
-        for (int i = 0; i < NUM_CHEFS; i++) {
-            s.setChef(i, *chefs[i]);
-        }
     }
 
     int r = 0;
     RList *recipeList = this->randomMoveFunc->r;
+    auto allRecipesId = std::set<int>();
+    for (size_t i = 0; i < recipeList->size(); i++) {
+        allRecipesId.insert(recipeList->at(i).id);
+    }
 
     for (int j = 0; j < NUM_CHEFS; j++) {
         auto &skill = s.getCookAbilities()[j];
         for (int i = 0; i < DISH_PER_CHEF; i++) {
-            int count = 0;
-            Recipe *newRecipe;
-            do {
-                newRecipe = &recipeList->at(rand() % recipeList->size());
-                count++;
-            } while (((skill.ability / newRecipe->cookAbility == 0) ||
-                      inArray(s.recipe, r, newRecipe)) &&
-                     count < RANDOM_SEARCH_TIMEOUT * RANDOM_SEARCH_TIMEOUT);
-            s.recipe[r] = newRecipe;
-            if (count >= RANDOM_SEARCH_TIMEOUT * RANDOM_SEARCH_TIMEOUT) {
-                std::cout << NoRecipeException(recipeList->size()).what()
-                          << std::endl;
-                exit(1);
+            if (initState != NULL &&
+                allRecipesId.contains(initState->recipe[r]->id) &&
+                !s.repeatedRecipe(initState->recipe[r], r) &&
+                (skill.ability / initState->recipe[r]->cookAbility != 0)) {
+                s.recipe[r] = initState->recipe[r];
+            } else {
+                int count = 0;
+                Recipe *newRecipe;
+                do {
+                    newRecipe = &recipeList->at(rand() % recipeList->size());
+                    count++;
+                } while (((skill.ability / newRecipe->cookAbility == 0) ||
+                          inArray(s.recipe, r, newRecipe)) &&
+                         count < RANDOM_SEARCH_TIMEOUT * RANDOM_SEARCH_TIMEOUT);
+                s.recipe[r] = newRecipe;
+                if (count >= RANDOM_SEARCH_TIMEOUT * RANDOM_SEARCH_TIMEOUT) {
+                    std::cout << NoRecipeException(recipeList->size()).what()
+                              << std::endl;
+                    exit(1);
+                }
             }
             r++;
         }
     }
     return s;
 }
+
 States SARunner::run(States *s0,
 #ifdef EMSCRIPTEN_PROGRESS
                      emscripten::val postProgress,
@@ -100,12 +119,12 @@ States SARunner::run(States *s0,
                      bool progress,
 #endif
                      bool silent, const char *filename) {
-    States s;
-    if (s0 == NULL) {
-        s = generateStates(this->chefList, NULL);
-    } else {
-        s = *s0;
+    if (this->stepMax == 0 && s0 != NULL) {
+        return *s0;
+        // Skip validity check of the initial state
     }
+    States s;
+    s = generateStates(s0, this->chefList);
     debugIntegrity(s);
     int energy = sumPrice(*rl, s);
 

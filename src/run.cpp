@@ -12,15 +12,6 @@ Result run(const RuleInfo &rl, const CList &chefList, RList &recipeList,
     for (auto &chef : *chefListPtr) {
         chef.recipeLearned = new std::vector<Recipe *>();
     }
-    if (state_resumed != NULL) {
-        for (int i = 0; i < NUM_CHEFS; i++) {
-            auto tool = state_resumed->getTool(i);
-            state_resumed->setChef(
-                i, *chefListPtr->byId(state_resumed->getChef(i).id));
-            state_resumed->modifyTool(i, tool);
-            // Renew if since we change recipe learned
-        }
-    }
 
     srand(seed);
     SARunner saRunner(&rl, chefListPtr, &recipeList, true, f::t_dist_slow,

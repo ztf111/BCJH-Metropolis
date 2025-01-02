@@ -44,17 +44,18 @@ class States {
     //         chefs[i].updateNameFromTool();
     //     }
     // }
-    bool repeatedChef(const Chef *const chef = NULL, int except = -1) const {
+    bool repeatedChef(const Chef *const chef = NULL, int except = -1,
+                      int maxChef = NUM_CHEFS) const {
         if (chef != NULL) {
-            for (int i = 0; i < NUM_CHEFS; i++) {
+            for (int i = 0; i < maxChef; i++) {
                 if (except != i && chef->id == chefs[i].id) {
                     return true;
                 }
             }
             return false;
         } else {
-            for (int i = 0; i < NUM_CHEFS; i++) {
-                for (int j = i + 1; j < NUM_CHEFS; j++) {
+            for (int i = 0; i < maxChef; i++) {
+                for (int j = i + 1; j < maxChef; j++) {
                     if (chefs[i].id == chefs[j].id) {
                         return true;
                     }
@@ -63,10 +64,11 @@ class States {
             return false;
         }
     }
-    bool repeatedRecipe(Recipe *recipe = NULL, int except = -1) const {
+    bool repeatedRecipe(Recipe *recipe = NULL, int except = -1,
+                        int maxRecipe = NUM_CHEFS * DISH_PER_CHEF) const {
         if (recipe == NULL) {
-            for (int i = 0; i < NUM_CHEFS * DISH_PER_CHEF; i++) {
-                for (int j = i + 1; j < NUM_CHEFS * DISH_PER_CHEF; j++) {
+            for (int i = 0; i < maxRecipe; i++) {
+                for (int j = i + 1; j < maxRecipe; j++) {
                     if (this->recipe[i] == this->recipe[j]) {
                         return true;
                     }
@@ -74,7 +76,7 @@ class States {
             }
             return false;
         } else {
-            for (int i = 0; i < NUM_CHEFS * DISH_PER_CHEF; i++) {
+            for (int i = 0; i < maxRecipe; i++) {
                 if (except != i && recipe == this->recipe[i]) {
                     return true;
                 }

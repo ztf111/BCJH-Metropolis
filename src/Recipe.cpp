@@ -129,7 +129,7 @@ void Recipe::getMaterials(Json::Value &materialsJson) {
     this->materialCategories = Materials();
     for (auto m : materialsJson) {
         int materialId = m["material"].asInt();
-        int quantity = m["quantity"].asInt();
+        // int quantity = m["quantity"].asInt();
         // this->materials[materialId] = quantity;
 
         for (auto meat : materialList.meat) {

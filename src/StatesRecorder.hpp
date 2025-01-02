@@ -51,7 +51,7 @@ class StatesSerializer {
             return NULL;
         }
         for (int i = 0; i < NUM_CHEFS; i++) {
-            state->setChef(i, *cl->byId(chefs[i]));
+            state->setChef(i, cl->byId(chefs[i]));
             state->modifyTool(i, tools[i]);
         }
         for (int i = 0; i < NUM_CHEFS * DISH_PER_CHEF; i++) {

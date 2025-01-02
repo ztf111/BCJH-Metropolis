@@ -100,6 +100,7 @@ void Chef::loadAppendChef(CList &chefList, int chefRarity,
             chef.modifyTool(NOT_EQUIPPED);
         }
     } else {
+        Tool::allowTool = false;
         for (auto &chef : newChefList) {
             chef.modifyTool(NO_TOOL);
         }

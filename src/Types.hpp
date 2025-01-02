@@ -7,6 +7,7 @@
 #include <set>
 #include <cassert>
 struct Tool {
+    static bool allowTool;
     ToolEnum type = NOT_EQUIPPED;
     int value = 100;
 };

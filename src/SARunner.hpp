@@ -35,7 +35,7 @@ class SARunner {
 #ifdef VIS_HISTORY
     History *history;
 #endif
-    States generateStates(const CList *chefList, Chef *chefs[NUM_CHEFS]);
+    States generateStates(States *initState, const CList *chefList);
     static int T_MAX_CHEF;
     static int T_MAX_RECIPE;
     static int iterChef;

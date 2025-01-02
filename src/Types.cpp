@@ -1,7 +1,7 @@
 #include "Types.hpp"
 #include "Recipe.hpp"
 #include <cassert>
-
+bool Tool::allowTool = true;
 int GradeBuffCondition::test(const Skill *s, Recipe **r) {
     int count = 0;
     for (int i = 0; i < DISH_PER_CHEF; i++) {

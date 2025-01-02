@@ -47,7 +47,7 @@ std::string decodeUnicodeEscape(const std::string &input) {
 
 int main() {
     auto str = runjs(
-        userData_CONST, ruleData_CONST, 3170000, 50, 10, true,
+        userData_CONST, ruleData_CONST, 3170000, 0, 0, true,
         "PgEAAA4EAAADAwAAiQQAAMECAACSBAAABwAAADwAAAACAAAAZAAAAAEAAAAAAAAABQAAAG"
         "QAAAAEAAAAZAAAAAEAAAAAAAAAQwAAAFkAAAB4AgAAiwAAAHcCAAABAgAADQAAAHkCAAAy"
         "AAAA9gEAAHoCAAASAAAAIAEAAPwBAABFAAAAXgAAADICAAD4AQAA");

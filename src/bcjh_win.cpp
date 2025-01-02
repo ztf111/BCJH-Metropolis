@@ -25,15 +25,16 @@ const int T_MAX_RECIPE = T_MAX_RECIPE_orig;
 
 std::tuple<Json::Value, Json::Value, Json::Value, std::size_t> loadJsonFiles();
 
-void parseArgs(int argc, char *argv[], bool &silent, int &log, bool &mp,
-               int &seed, int &iterChef, int &iterRecipe) {
-    iterChef = 50;
-    iterRecipe = 10;
-    silent = false;
-    log = 0;
-    seed = (int)(time(NULL) * 100);
-    mp = true;
+std::tuple<bool, int, bool, int, int, int, std::string>
+parseArgs(int argc, char *argv[]) {
+    int iterChef = 50;
+    int iterRecipe = 10;
+    bool silent = false;
+    int log = 0;
+    int seed = (int)(time(NULL) * 100);
+    bool mp = true;
     int seed_orig = seed;
+    std::string recover_str = "";
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
         if (arg == "-s") {
@@ -45,6 +46,8 @@ void parseArgs(int argc, char *argv[], bool &silent, int &log, bool &mp,
             std::cout << "-v: 输出详细信息，默认不输出" << std::endl;
             std::cout << "-C: 厨师迭代次数，默认5000" << std::endl;
             std::cout << "-R: 菜谱迭代次数，默认1000" << std::endl;
+            std::cout << "--no-mp: 禁用多线程" << std::endl;
+            std::cout << "--recover-str: 恢复代码" << std::endl;
         } else if (arg == "--no-mp") {
             mp = false;
         } else if (arg == "--seed") {
@@ -53,6 +56,8 @@ void parseArgs(int argc, char *argv[], bool &silent, int &log, bool &mp,
             iterChef = atoi(argv[++i]);
         } else if (arg == "-R") {
             iterRecipe = atoi(argv[++i]);
+        } else if (arg == "--recover-str") {
+            recover_str = argv[++i];
         } else {
             std::cout << "未知参数：" << arg << std::endl;
             exit(1);
@@ -66,12 +71,18 @@ void parseArgs(int argc, char *argv[], bool &silent, int &log, bool &mp,
             std::cout << "Seed set to " << seed << std::endl;
         }
     }
+    if (recover_str != "") {
+        assert(iterChef == 0 && iterRecipe == 0 && !mp);
+        // In debug mode, whenever recover_str is set, we disable
+        // multi-threading and make sure that iters are 0 to avoid recovered
+        // string from being overwritten.
+    }
+    return {silent, log, mp, seed, iterChef, iterRecipe, recover_str};
 }
 
 int main(int argc, char *argv[]) {
-    bool silent, mp;
-    int seed, log, iterChef, iterRecipe;
-    parseArgs(argc, argv, silent, log, mp, seed, iterChef, iterRecipe);
+    auto [silent, log, mp, seed, iterChef, iterRecipe, recover_str] =
+        parseArgs(argc, argv);
     SARunner::init(T_MAX_CHEF, T_MAX_RECIPE, iterChef, iterRecipe, targetScore);
     auto [usrData, gameData, ruleData, fileHash] = loadJsonFiles();
     testJsonUpdate(gameData, usrData);
@@ -94,10 +105,15 @@ int main(int argc, char *argv[]) {
               << "线程，建议期间不要离开窗口，否则可能影响速度。" << std::endl;
 
     std::vector<std::future<Result>> futures;
-
-    StatesRecorderFile statesRecorder("states.txt", fileHash, &chefList,
-                                      &recipeList);
-    auto statesRecord = statesRecorder.get_states(num_threads);
+    StatesRecorderBase *statesRecorder = NULL;
+    if (recover_str == "") {
+        statesRecorder = new StatesRecorderFile("states.txt", fileHash,
+                                                &chefList, &recipeList);
+    } else {
+        statesRecorder =
+            new StatesRecorderString(recover_str, &chefList, &recipeList);
+    }
+    auto statesRecord = statesRecorder->get_states(num_threads);
     for (size_t i = 0; i < num_threads; i++) {
         futures.push_back(std::async(std::launch::async, run, std::ref(rl),
                                      std::ref(chefList), std::ref(recipeList),
@@ -107,7 +123,7 @@ int main(int argc, char *argv[]) {
     Result result;
     for (auto &future : futures) {
         Result tmp = future.get();
-        statesRecorder.add_state(&tmp.state);
+        statesRecorder->add_state(&tmp.state);
         totalScore += tmp.score;
         if (tmp.score > max_score) {
             result = tmp;
@@ -140,6 +156,7 @@ int main(int argc, char *argv[]) {
             delete c;
         }
     }
+    delete statesRecorder;
     MultiThreadProgressBar::destroy();
 }
 

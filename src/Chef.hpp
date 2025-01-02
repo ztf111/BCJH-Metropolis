@@ -117,9 +117,9 @@ class CList : public std::vector<Chef> {
             id2index[chef.id] = i++;
         }
     }
-    Chef *byId(int id) {
-        int index = id2index[id];
-        return &((*this)[index]);
+    Chef byId(int id) const {
+        int index = id2index.at(id);
+        return (*this)[index];
     }
 };
 
