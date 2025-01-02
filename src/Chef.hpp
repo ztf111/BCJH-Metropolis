@@ -44,8 +44,7 @@ class Chef {
     ToolEnum getToolType() const { return this->tool.type; }
     bool allowsTool() const { return this->tool.type != NO_TOOL; }
     void setNoTool() { this->tool.type = NO_TOOL; }
-    std::shared_ptr<std::vector<std::shared_ptr<Recipe>>> recipeLearned =
-        nullptr;
+    std::vector<Recipe *> *recipeLearned = NULL;
 
     static void setGlobalBuff(CookAbility buff) { globalAbilityBuff = buff; }
     static void setGlobalAbilityMale(int ability) {
