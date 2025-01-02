@@ -44,10 +44,9 @@ void mergeSkills(Skill *skillsResult, const Skill *selfSkills,
         }
     }
 }
-inline void
-applyConditionBuff(const Skill *const cookAbilitySkill,
-                   const std::vector<ConditionalBuff *> &conditionalEffects,
-                   Skill *skillTarget, Recipe **recipe) {
+inline void applyConditionBuff(const Skill *const cookAbilitySkill,
+                               const ConditionalEffects &conditionalEffects,
+                               Skill *skillTarget, Recipe **recipe) {
     // 条件技能
     for (auto &ce : conditionalEffects) {
         for (int i = ce->conditionFunc->test(cookAbilitySkill, recipe); i > 0;

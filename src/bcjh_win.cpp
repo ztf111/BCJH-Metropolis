@@ -152,9 +152,6 @@ int main(int argc, char *argv[]) {
     for (auto iter = Skill::skillList.begin(); iter != Skill::skillList.end();
          iter++) {
         auto &s = iter->second;
-        for (auto &c : s.conditionalEffects) {
-            delete c;
-        }
     }
     delete statesRecorder;
     MultiThreadProgressBar::destroy();

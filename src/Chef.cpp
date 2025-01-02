@@ -11,6 +11,7 @@
 #include "../toolEquipped.hpp"
 #include "exception.hpp"
 #include "loadToolEquipped.hpp"
+#include <memory>
 bool Chef::coinBuffOn = true;
 CookAbility Chef::globalAbilityBuff;
 int Chef::globalAbilityMale = 0;
@@ -437,7 +438,8 @@ void Skill::loadJson(const Json::Value &v) {
                     skillList[id] += skill;
                 } else {
                     skillList[id].conditionalEffects.push_back(
-                        new ConditionalBuff(condition, skill));
+                        std::make_shared<ConditionalBuff>(
+                            ConditionalBuff(condition, skill)));
                 }
             }
         }

@@ -332,6 +332,7 @@ class DiscretizedBuff {
 
 class BuffCondition;
 class ConditionalBuff;
+typedef std::vector<std::shared_ptr<ConditionalBuff>> ConditionalEffects;
 
 class Skill {
 
@@ -356,10 +357,9 @@ class Skill {
 
     int pricePercentBuff = 0;
     int baseAddBuff = 0;
-    std::vector<ConditionalBuff *> conditionalEffects;
+    ConditionalEffects conditionalEffects;
     Skill() = default;
     Skill(Type type) : type(type) {}
-    Skill getSkill(int id) { return skillList[id]; }
     static void loadJson(const Json::Value &v);
     void operator+=(const Skill &s);
     Skill operator+(const Skill &s) {
@@ -392,7 +392,7 @@ class Skill {
     }
     ~Skill() {} // conditionalEffects should be handled manually.
 };
-
+class Skill;
 class Recipe;
 // Records nonconventional buffs that requires consideration of multiple dishes
 class BuffCondition {
