@@ -146,9 +146,7 @@ int main(int argc, char *argv[]) {
 #ifdef VIS_HISTORY
     std::cout << "均分：" << totalScore / num_threads << std::endl;
 #endif
-    for (auto &chef : chefList) {
-        chef.deletePointers();
-    }
+
     for (auto iter = Skill::skillList.begin(); iter != Skill::skillList.end();
          iter++) {
         auto &s = iter->second;

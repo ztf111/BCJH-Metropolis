@@ -11,6 +11,7 @@
 #include "include/cereal/types/vector.hpp"
 #include "include/cereal/types/map.hpp"
 #include "include/cereal/types/string.hpp"
+#include "include/cereal/types/set.hpp"
 
 struct Tool {
     static bool allowTool;
@@ -32,10 +33,7 @@ class Tags : public std::set<int> {
         }
         return false;
     }
-
-    template <class Archive> void serialize(Archive &archive) {
-        archive(cereal::base_class<std::set<int>>(this));
-    }
+    // Serialization inherited from std::set
 };
 
 class MaterialCategoryBuff {
@@ -456,7 +454,7 @@ class BuffCondition {
 class GradeBuffCondition : public BuffCondition {
   public:
     int grade;
-    GradeBuffCondition(int grade = -1)
+    GradeBuffCondition(int grade)
         : grade(grade),
           BuffCondition(std::string("等级做到") + (char)('0' + grade)) {}
     int test(const Skill *s, Recipe **r) override;
@@ -465,6 +463,14 @@ class GradeBuffCondition : public BuffCondition {
     template <class Archive> void serialize(Archive &archive) {
         archive(cereal::base_class<BuffCondition>(this), grade);
     }
+    template <class Archive>
+    static void
+    load_and_construct(Archive &ar,
+                       cereal::construct<GradeBuffCondition> &construct) {
+        int grade;
+        ar(grade);
+        construct(grade);
+    } // Necessary, since no default constructor.
 };
 
 class ThreeSameCookAbilityBuffCondition : public BuffCondition {

@@ -16,6 +16,9 @@ struct GlobalAbilityBuff {
     int globalAbilityMale;
     int globalAbilityFemale;
     CookAbility globalAbilityBuff;
+    template <class Archive> void serialize(Archive &archive) {
+        archive(globalAbilityMale, globalAbilityFemale, globalAbilityBuff);
+    }
 };
 
 class StatesSerializer {

@@ -1,45 +1,39 @@
 #include "StatesRecorder.hpp"
-
-StatesSerializer::StatesSerializer(CList *cl, RList *rl) {
-    this->cl = cl;
-    this->rl = rl;
+#include "include/cereal/archives/portable_binary.hpp"
+#include "include/cereal/types/array.hpp"
+#include "include/cereal/types/vector.hpp"
+#include "include/cereal/types/memory.hpp"
+#include "include/cereal/types/tuple.hpp"
+#include "include/libzpaq/libzpaq.h"
+void libzpaq::error(const char *msg) {
+    std::cerr << "Error: " << msg << std::endl;
+    exit(1);
 }
 
 void StatesSerializer::serialize(std::ostream &stream, States *state) {
-    int chefs[NUM_CHEFS];
-    Tool tools[NUM_CHEFS];
+    Chef chefs[NUM_CHEFS];
     int recipe[DISH_PER_CHEF * NUM_CHEFS];
     for (int i = 0; i < NUM_CHEFS; i++) {
-        chefs[i] = state->getChef(i).id;
-        tools[i] = state->getTool(i);
+        chefs[i] = state->getChef(i);
     }
     for (int i = 0; i < NUM_CHEFS * DISH_PER_CHEF; i++) {
         recipe[i] = state->recipe[i] == NULL ? -1 : state->recipe[i]->id;
     }
     GlobalAbilityBuff gab{Chef::globalAbilityMale, Chef::globalAbilityFemale,
                           Chef::globalAbilityBuff};
-    stream.write((char *)chefs, sizeof(int) * NUM_CHEFS);
-    stream.write((char *)tools, sizeof(Tool) * NUM_CHEFS);
-    stream.write((char *)recipe, sizeof(int) * NUM_CHEFS * DISH_PER_CHEF);
-    stream.write((char *)&gab, sizeof(GlobalAbilityBuff));
+    cereal::PortableBinaryOutputArchive archive(stream);
+    archive(chefs, recipe, gab);
 }
 
 States *StatesSerializer::deserialize(std::istream &stream) {
     States *state = new States();
-    int chefs[NUM_CHEFS];
-    Tool tools[NUM_CHEFS];
+    Chef chefs[NUM_CHEFS];
     int recipe[DISH_PER_CHEF * NUM_CHEFS];
-    stream.read((char *)chefs, sizeof(int) * NUM_CHEFS);
-    stream.read((char *)tools, sizeof(Tool) * NUM_CHEFS);
-    stream.read((char *)recipe, sizeof(int) * NUM_CHEFS * DISH_PER_CHEF);
-    stream.read((char *)&gab, sizeof(GlobalAbilityBuff));
-    if (stream.fail()) {
-        delete state;
-        return NULL;
-    }
+    cereal::PortableBinaryInputArchive archive(stream);
+    archive(chefs, recipe, this->gab);
+
     for (int i = 0; i < NUM_CHEFS; i++) {
-        state->setChef(i, cl->byId(chefs[i])); // May raise an exception
-        state->modifyTool(i, tools[i]);
+        state->setChef(i, chefs[i]);
     }
     for (int i = 0; i < NUM_CHEFS * DISH_PER_CHEF; i++) {
         if (recipe[i] != -1) {
@@ -47,6 +41,11 @@ States *StatesSerializer::deserialize(std::istream &stream) {
         }
     }
     return state;
+}
+
+StatesSerializer::StatesSerializer(CList *cl, RList *rl) {
+    this->cl = cl;
+    this->rl = rl;
 }
 
 StatesRecorderBase::StatesRecorderBase(CList *cl, RList *rl)

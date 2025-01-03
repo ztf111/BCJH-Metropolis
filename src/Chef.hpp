@@ -85,12 +85,7 @@ class Chef {
     void print() const;
     void modifyTool(Tool);
     void modifyTool(ToolEnum);
-    void deletePointers() {
-        skill.reset();
-        companyBuff.reset();
-        nextBuff.reset();
-        tagForCompanyBuff.reset();
-    }
+
     std::string getToolName() const;
     template <class Archive> void serialize(Archive &archive) {
         archive(male, female, id, skill, companyBuff, nextBuff,

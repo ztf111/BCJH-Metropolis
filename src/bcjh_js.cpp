@@ -123,7 +123,11 @@ std::string
     exactChefTool(rl, result.state);
 
     // Logging
+// Suppress unused variable warning
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
     int score = sumPrice(rl, result.state, log);
+# pragma GCC diagnostic pop
     std::cout << "**************\n总分: " << result.score << "\n***************"
               << std::endl;
     end = clock();
@@ -146,8 +150,6 @@ std::string
 #endif
 
     auto resultStr = ResultJsonSerializable(result, recover_str).toJson();
-    for (auto &chef : chefList) {
-        chef.deletePointers();
-    }
+
     return resultStr;
 }

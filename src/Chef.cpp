@@ -84,7 +84,7 @@ void Chef::loadAppendChef(CList &chefList, int chefRarity,
             std::cout << "toolEquipped.csv文件已加载。" << std::endl;
         }
     }
-    CSVWarning(w);
+    CSVWarning w;
     for (auto &chef : newChefList) {
         for (int i = chef.skill->multiToolEffect; i > 0; i--)
             w += loadToolFromFile(&chef, toolFileType);

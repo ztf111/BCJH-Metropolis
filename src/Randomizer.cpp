@@ -196,7 +196,10 @@ States ChefRandomizer::operator()(States s) {
     debugIntegrity(s);
     double random = (double)rand() / RAND_MAX;
     double p_randomChef = 0.9;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
     int path;
+#pragma GCC diagnostic pop
     calls++;
     p_randomChef = 0.85;
     if (random < 1 - p_randomChef) {
