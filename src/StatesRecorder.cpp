@@ -4,11 +4,6 @@
 #include "include/cereal/types/vector.hpp"
 #include "include/cereal/types/memory.hpp"
 #include "include/cereal/types/tuple.hpp"
-#include "include/libzpaq/libzpaq.h"
-void libzpaq::error(const char *msg) {
-    std::cerr << "Error: " << msg << std::endl;
-    exit(1);
-}
 
 void StatesSerializer::serialize(std::ostream &stream, States *state) {
     Chef chefs[NUM_CHEFS];
@@ -21,15 +16,21 @@ void StatesSerializer::serialize(std::ostream &stream, States *state) {
     }
     GlobalAbilityBuff gab{Chef::globalAbilityMale, Chef::globalAbilityFemale,
                           Chef::globalAbilityBuff};
-    cereal::PortableBinaryOutputArchive archive(stream);
-    archive(chefs, recipe, gab);
+    std::stringstream oss;
+    {
+        cereal::PortableBinaryOutputArchive archive(oss);
+        archive(chefs, recipe, gab);
+    }
+    compress(oss, stream);
 }
 
 States *StatesSerializer::deserialize(std::istream &stream) {
     States *state = new States();
     Chef chefs[NUM_CHEFS];
     int recipe[DISH_PER_CHEF * NUM_CHEFS];
-    cereal::PortableBinaryInputArchive archive(stream);
+    std::stringstream iss;
+    decompress(stream, iss);
+    cereal::PortableBinaryInputArchive archive(iss);
     archive(chefs, recipe, this->gab);
 
     for (int i = 0; i < NUM_CHEFS; i++) {
@@ -168,7 +169,7 @@ void StatesRecorderString::add_state(States *state) {
     serializer.serialize(oss, state);
     std::string encoded_state =
         base64_encode(reinterpret_cast<const unsigned char *>(oss.str().data()),
-                      oss.str().size());
+                      oss.str().size(), true);
     encodedStream << encoded_state << "\n";
 }
 

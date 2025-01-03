@@ -10,7 +10,8 @@
 #include <iomanip>
 #include <iterator>
 #include <algorithm>
-#include "include/base64/base64.h" // Include the provided base64 encoding/decoding library
+#include "include/base64/base64.h"
+#include "utils/libzpaq-wrapper.hpp"
 
 struct GlobalAbilityBuff {
     int globalAbilityMale;

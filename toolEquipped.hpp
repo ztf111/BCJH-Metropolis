@@ -4,7 +4,8 @@
 #include "src/Chef.hpp"
 #include "src/Types.hpp"
 #include "src/Values.hpp"
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
 #ifdef __linux__
 void toolEquipped(Chef *chef);
 #endif
@@ -56,5 +57,5 @@ void toolEquipped(Chef *chef) {
         chef->setNoTool();                // 不允许装备其他厨具
     }
 }
-
+#pragma GCC diagnostic pop
 #endif
