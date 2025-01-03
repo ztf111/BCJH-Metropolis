@@ -1,3 +1,8 @@
+## [1.3.1] - 2025-01-01
+### 新增
+- 支持小当家
+- [1.3.0]中的字符串缓存现在支持跨设备、跨账号共享。（公共接口不变）
+  
 ## [1.3.0] - 2025-01-01
 ### 修复
 - 支持“基础售价+口味/食材”组合
@@ -78,6 +83,7 @@
 - 计算器各线程进度条。
 - 暂时取消完成搜索之后的手动优化。也就是说，计算器给出的结果可能还有简单的优化空间（如改一个菜、改一个厨师这种）。
 
+[1.3.1]: https://github.com/hjenryin/BCJH-Metropolis/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/hjenryin/BCJH-Metropolis/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/hjenryin/BCJH-Metropolis/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/hjenryin/BCJH-Metropolis/compare/v1.1.3...v1.2.0

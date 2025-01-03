@@ -337,6 +337,8 @@ void Skill::loadJson(const Json::Value &v) {
                             // 制作一二火料理基础售价
 
                             // Save for later
+                        } else if (conditionType == "ChefTag") {
+                            skill.baseAddBuff = value;
                         } else {
                             UnknownSkillWarning(
                                 skillJson["desc"].asString() +
@@ -348,10 +350,37 @@ void Skill::loadJson(const Json::Value &v) {
                     }
 
                 } else if (type == "CookbookPrice") {
-                    // Handled later
                     if (!effect.isMember("conditionType")) {
-                        UnknownSkillException(skillJson["desc"].asString() +
-                                              "（debug代码：" + type + ")");
+                        skill.pricePercentBuff = value;
+                    } else {
+                        std::string conditionType =
+                            effect["conditionType"].asString();
+                        if (conditionType == "CookbookRarity" ||
+                            conditionType == "ExcessCookbookNum" ||
+                            conditionType == "FewerCookbookNum" ||
+                            conditionType == "Rank") {
+
+                            // Conditional Buff:
+                            // 每制作一种神级料理菜谱基础售价
+                            // 制作三种同技法料理在场基础售价
+
+                            // Field in Skill designated:
+                            // 制作一星和二星料理售价+20% CookBookRarity
+                            // 制作小于22份的料理该料理基础售价 FewerCookbookNum
+                            // 制作大于17份的料理时售价 + 40 % ExcessCookbookNum
+                            // 制作神级料理售价+70% Rank
+
+                            // Save for later
+                        } else if (conditionType == "ChefTag") {
+                            skill.pricePercentBuff = value;
+                        } else {
+                            UnknownSkillWarning(
+                                skillJson["desc"].asString() +
+                                "conditionType: " + conditionType +
+                                " with type: " + type);
+                            // Not implemented:
+                            // 使用水果的料理基础售价 CookbookTag
+                        }
                     }
                 } else if (type.starts_with("BasicPriceUse")) {
                     // e.g.: BasePriceUseStirfry
