@@ -104,8 +104,9 @@ std::string
     // Count time used
     clock_t start, end;
     start = clock();
-    StatesRecorderString statesRecorder(recover_string, &chefList, &recipeList);
-    auto stateResumed = statesRecorder.get_states(1)[0];
+    // StatesRecorderString statesRecorder(recover_string, &chefList,
+    // &recipeList); auto stateResumed = statesRecorder.get_states(1)[0];
+    States *stateResumed = nullptr;
     Result result = run(rl, chefList, recipeList, 0, true, seed
 #ifdef EMSCRIPTEN_PROGRESS
                         ,
@@ -137,8 +138,9 @@ std::string
     // Restore std::cout
     std::cout.rdbuf(oldCoutStreamBuf);
     result.logs = ss.str();
-    statesRecorder.add_state(&result.state);
-    auto recover_str = statesRecorder.get_encoded_states();
+    // statesRecorder.add_state(&result.state);
+    // auto recover_str = statesRecorder.get_encoded_states();
+    std::string recover_str = "";
 #ifdef MEASURE_TIME
     std::cout << "randomRecipeTime: " << randomRecipeTime << std::endl;
     std::cout << "randomChefTime: " << randomChefTime << std::endl;
