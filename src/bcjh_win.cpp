@@ -27,30 +27,15 @@ std::tuple<Json::Value, Json::Value, Json::Value, std::size_t> loadJsonFiles();
 
 std::tuple<bool, int, bool, int, int, int, std::string>
 parseArgs(int argc, char *argv[]) {
-    int iterChef = 1;
-    int iterRecipe = 1;
+    int iterChef = 5000;
+    int iterRecipe = 1000;
     bool silent = false;
-    int log = 0 + VERBOSE;
+    int log = 0;
     int seed = (int)(time(NULL) * 100);
-    bool mp = false;
+    bool mp = true;
     int seed_orig = seed;
 
-    std::string recover_str =
-        "N2tTdKAxg9OMsiiw03pQUQEB/wAJEAAAFwMOCA4AAgn/"
-        "AwUICwMIDgQIDgUIDgYIDgcIDggIDgkEEhQDDQgODAMNCA4OAw4IDhAHCAASGP8HEAATGP"
-        "8GCBMSGP8JExQg/wYAFRQY/wASaIf/WHJFr9+PQa//"
-        "5xovCl8ARpcUhQFwPwNfADRfAEpGGTtwXwI0XwM0XwNKRhk7CXAZOwlwGTsJcBk7CXAZOw"
-        "lwGTsJcBk7CTtwXwtGlxiFAXBfDDRCrwE8SglEPF8MSkYZO3BfDjRCpwM8SgkJRDxfDkpG"
-        "GTtwXxA0Qq8DPEoJCQlEPF8QSkYZO3BfEzRKBM8IhM8IcF8VNEoEzwiECc8IhNcFzwhwOA"
-        "ABADUzMDkAAP/vPkAoWresPYM73T0n/vxEChkQ3+J9rUz3huZgnD7e4/eT4BKIPRD/"
-        "xbYnVpit54qRsvILMA2DZoxP3SYFJmP+"
-        "pEQHodLSdiHGxclAK7D6T0p1mjqgJDcbsbd0qxtu58ppev57rHTVkM296iR5yv2FQ6XdEg"
-        "/EX+"
-        "W5FDTh2bW3SpjFJwmmMwelm6HFQ7xiFlQkFheFWMntRIXpdqayzZ1wzEcDRZ1kalQCupEd"
-        "pRv7H+xP92XdeQKI74vnCG90AuS6rqff3/b1kVjmREiNz5O/"
-        "NST3r61zyghhvKZEeMW9nX+sA68keHa8NOQk+r+Q5EbkreU9ihvyHsNQoqap/"
-        "5QxqoEfOKKJC7PLfxBHvOawW61Oonr0Y0DcNdgoJzeslyLtMkCDoQVuwcjN2hqb/"
-        "EDfZ0QAAAAA/Yv6NDauaIUxH2DjyH0EOYQ1SWv5/w==";
+    std::string recover_str;
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
         if (arg == "-s") {

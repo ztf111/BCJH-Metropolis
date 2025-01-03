@@ -59,13 +59,14 @@ std::string
     EMSCRIPTEN_KEEPALIVE
 #endif
     runjs(const std::string &userDataIn, const std::string &ruleDataIn,
-          int targetScore, int iterChef, int iterRecipe, bool allowTool,
-          const std::string &recover_string
+          int targetScore, int iterChef, int iterRecipe, bool allowTool
+//   ,const std::string &recover_string
 #ifdef EMSCRIPTEN_PROGRESS
           ,
           emscripten::val postProgress
 #endif
     ) {
+    std::string recover_string = "";
     const int T_MAX_CHEF = targetScore / 100;
     const int T_MAX_RECIPE = targetScore / 400;
     SARunner::init(T_MAX_CHEF, T_MAX_RECIPE, iterChef, iterRecipe, targetScore);
