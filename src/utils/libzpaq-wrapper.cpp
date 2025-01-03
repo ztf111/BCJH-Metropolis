@@ -16,7 +16,9 @@ int IStreamReader::get() { return is.get(); }
 
 void libzpaq::error(const char *msg) {
     std::cerr << "Error: " << msg << std::endl;
+#ifndef EMSCRIPTEN
     throw std::runtime_error(msg);
+#endif
 }
 
 void compress(std::stringstream &in, std::ostream &out) {
