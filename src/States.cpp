@@ -1,6 +1,5 @@
 #include "States.hpp"
 #include "utils/math.hpp"
-#include "Types.hpp"
 double getStatesSkillsTime = 0;
 
 template <typename T> inline void copy(T *dst, const T *src, int n) {

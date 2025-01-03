@@ -6,11 +6,22 @@
 #include "utils/Printer.hpp"
 #include <set>
 #include <cassert>
+#include "include/cereal/archives/portable_binary.hpp"
+#include "include/cereal/types/memory.hpp"
+#include "include/cereal/types/vector.hpp"
+#include "include/cereal/types/map.hpp"
+#include "include/cereal/types/string.hpp"
+
 struct Tool {
     static bool allowTool;
     ToolEnum type = NOT_EQUIPPED;
     int value = 100;
+
+    template <class Archive> void serialize(Archive &archive) {
+        archive(type, value);
+    }
 };
+
 class Tags : public std::set<int> {
   public:
     Tags() = default;
@@ -21,7 +32,12 @@ class Tags : public std::set<int> {
         }
         return false;
     }
+
+    template <class Archive> void serialize(Archive &archive) {
+        archive(cereal::base_class<std::set<int>>(this));
+    }
 };
+
 class MaterialCategoryBuff {
   public:
     int vegetable;
@@ -57,6 +73,10 @@ class MaterialCategoryBuff {
             return &this->creation;
         }
         return NULL;
+    }
+
+    template <class Archive> void serialize(Archive &archive) {
+        archive(vegetable, meat, fish, creation);
     }
 };
 
@@ -112,6 +132,10 @@ class FlavorBuff {
             return &this->tasty;
         }
         return NULL;
+    }
+
+    template <class Archive> void serialize(Archive &archive) {
+        archive(sweet, salty, sour, bitter, spicy, tasty);
     }
 };
 class Ability {
@@ -252,6 +276,10 @@ class Ability {
         }
         return NULL;
     }
+
+    template <class Archive> void serialize(Archive &archive) {
+        archive(stirfry, bake, boil, steam, fry, knife);
+    }
 };
 
 class AbilityBuff : public Ability {
@@ -259,6 +287,10 @@ class AbilityBuff : public Ability {
     AbilityBuff() {}
     AbilityBuff(int stirfry, int bake, int boil, int steam, int fry, int knife)
         : Ability(stirfry, bake, boil, steam, fry, knife) {}
+
+    template <class Archive> void serialize(Archive &archive) {
+        archive(cereal::base_class<Ability>(this));
+    }
 };
 class CookAbility : public Ability {
 
@@ -275,6 +307,10 @@ class CookAbility : public Ability {
         p.print("", " ", end.c_str());
     }
     int operator*(const AbilityBuff &a) const;
+
+    template <class Archive> void serialize(Archive &archive) {
+        archive(cereal::base_class<Ability>(this));
+    }
 };
 class RarityBuff {
     int data[5] = {0, 0, 0, 0, 0};
@@ -294,6 +330,8 @@ class RarityBuff {
             return false;
         }
     }
+
+    template <class Archive> void serialize(Archive &archive) { archive(data); }
 };
 class DiscretizedBuff {
     int data[5] = {0, 0, 0, 0, 0};
@@ -328,6 +366,8 @@ class DiscretizedBuff {
             }
         }
     }
+
+    template <class Archive> void serialize(Archive &archive) { archive(data); }
 };
 
 class BuffCondition;
@@ -391,6 +431,14 @@ class Skill {
         std::cout << std::endl;
     }
     ~Skill() {} // conditionalEffects should be handled manually.
+
+    template <class Archive> void serialize(Archive &archive) {
+        archive(type, chefTagsForPARTIAL, ability, cookAbilityPercentBuff,
+                abilityBuff, abilityBaseBuff, flavorBuff, flavorBaseBuff,
+                materialBuff, materialBaseBuff, rarityBuff, rarityBaseBuff,
+                gradeBuff, multiToolEffect, pricePercentBuff, baseAddBuff,
+                conditionalEffects);
+    }
 };
 class Skill;
 class Recipe;
@@ -398,37 +446,50 @@ class Recipe;
 class BuffCondition {
 
   public:
-    const std::string name;
+    std::string name;
     BuffCondition(const std::string &name = "") : name(name) {}
     virtual int test(const Skill *s, Recipe **r) = 0;
     virtual ~BuffCondition() {}
+
+    template <class Archive> void serialize(Archive &archive) { archive(name); }
 };
 class GradeBuffCondition : public BuffCondition {
   public:
     int grade;
-    GradeBuffCondition(int grade)
+    GradeBuffCondition(int grade = -1)
         : grade(grade),
           BuffCondition(std::string("等级做到") + (char)('0' + grade)) {}
     int test(const Skill *s, Recipe **r) override;
     ~GradeBuffCondition() override {}
+
+    template <class Archive> void serialize(Archive &archive) {
+        archive(cereal::base_class<BuffCondition>(this), grade);
+    }
 };
+
 class ThreeSameCookAbilityBuffCondition : public BuffCondition {
   public:
-    ThreeSameCookAbilityBuffCondition() : BuffCondition("三技法相同") {}
+    ThreeSameCookAbilityBuffCondition()
+        : BuffCondition(std::string("三技法相同")) {}
     int test(const Skill *s, Recipe **r) override;
     ~ThreeSameCookAbilityBuffCondition() override {}
+
+    template <class Archive> void serialize(Archive &archive) {
+        archive(cereal::base_class<BuffCondition>(this));
+    }
 };
+CEREAL_FORCE_DYNAMIC_INIT(Types)
 
 class ConditionalBuff {
   public:
-    BuffCondition *conditionFunc;
+    std::shared_ptr<BuffCondition> conditionFunc;
     Skill skill;
-    ConditionalBuff(BuffCondition *conditionFunc, Skill skill)
+    ConditionalBuff(std::shared_ptr<BuffCondition> conditionFunc, Skill skill)
         : conditionFunc(conditionFunc), skill(skill) {}
     ConditionalBuff() : conditionFunc(NULL), skill(Skill()) {}
-    ~ConditionalBuff() {
-        // if (conditionFunc != NULL) // wierd, shouldn't need this.
-        delete conditionFunc;
+
+    template <class Archive> void serialize(Archive &archive) {
+        archive(conditionFunc, skill);
     }
 };
 #endif

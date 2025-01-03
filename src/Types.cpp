@@ -1,8 +1,18 @@
 #include "Types.hpp"
 #include "Recipe.hpp"
 #include <cassert>
+#include "include/cereal/archives/portable_binary.hpp"
+#include "include/cereal/types/memory.hpp"
+#include "include/cereal/types/vector.hpp"
+#include "include/cereal/types/map.hpp"
+#include "include/cereal/types/string.hpp"
+
 bool Tool::allowTool = true;
+
 int GradeBuffCondition::test(const Skill *s, Recipe **r) {
+    if (grade == -1) {
+        throw std::runtime_error("GradeBuffCondition::test: grade not set");
+    }
     int count = 0;
     for (int i = 0; i < DISH_PER_CHEF; i++) {
         count += (s->ability / r[i]->cookAbility >= grade);
@@ -17,6 +27,7 @@ int ThreeSameCookAbilityBuffCondition::test(const Skill *s, Recipe **r) {
     }
     return (tmp != 0);
 }
+
 void Skill::operator+=(const Skill &s) {
     this->ability.add(s.ability);
     this->cookAbilityPercentBuff.add(s.cookAbilityPercentBuff);
@@ -54,3 +65,7 @@ void Skill::operator+=(const Skill &s) {
         // Only Unset and Self can merge with different types.
     }
 }
+CEREAL_REGISTER_DYNAMIC_INIT(Types)
+// Register polymorphic types with cereal
+CEREAL_REGISTER_TYPE(GradeBuffCondition)
+CEREAL_REGISTER_TYPE(ThreeSameCookAbilityBuffCondition)

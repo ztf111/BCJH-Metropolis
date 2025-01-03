@@ -12,6 +12,7 @@
 #include "exception.hpp"
 #include "loadToolEquipped.hpp"
 #include <memory>
+
 bool Chef::coinBuffOn = true;
 CookAbility Chef::globalAbilityBuff;
 int Chef::globalAbilityMale = 0;
@@ -371,7 +372,7 @@ void Skill::loadJson(const Json::Value &v) {
                     missingSkills[type] = skillJson["desc"].asString();
                     continue;
                 }
-                BuffCondition *condition = NULL;
+                std::shared_ptr<BuffCondition> conditionPtr;
                 if (effect.isMember("conditionType")) {
                     auto conditionType = effect["conditionType"].asString();
                     int cvalue = 0;
@@ -395,7 +396,8 @@ void Skill::loadJson(const Json::Value &v) {
                                 " with type: " + type);
                         }
                     } else if (conditionType == "PerRank") {
-                        condition = new GradeBuffCondition(cvalue);
+                        conditionPtr =
+                            std::make_shared<GradeBuffCondition>(cvalue);
                     } else if (conditionType == "ExcessCookbookNum") {
                         assert(type == "CookbookPrice" || type == "BasicPrice");
                         DiscretizedBuff *targetBuff = NULL;
@@ -419,7 +421,8 @@ void Skill::loadJson(const Json::Value &v) {
                             Recipe::lessThan(cvalue);
                         targetBuff->masked_add(rarityUpperBound, value);
                     } else if (conditionType == "SameSkill") {
-                        condition = new ThreeSameCookAbilityBuffCondition();
+                        conditionPtr = std::make_shared<
+                            ThreeSameCookAbilityBuffCondition>();
                     } else if (conditionType == "Rank") {
                         assert(type == "CookbookPrice");
                         skill.gradeBuff[cvalue] = value;
@@ -434,12 +437,12 @@ void Skill::loadJson(const Json::Value &v) {
                             skillJson["desc"].asString();
                     }
                 }
-                if (condition == NULL) {
+                if (!conditionPtr) {
                     skillList[id] += skill;
                 } else {
                     skillList[id].conditionalEffects.push_back(
                         std::make_shared<ConditionalBuff>(
-                            ConditionalBuff(condition, skill)));
+                            ConditionalBuff(conditionPtr, skill)));
                 }
             }
         }

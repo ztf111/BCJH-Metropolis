@@ -2,7 +2,6 @@
 #define LOADTOOLEQUIPPED_HPP
 #include "Chef.hpp"
 #include "Values.hpp"
-#include "Types.hpp"
 #include <fstream>
 #include <vector>
 #include <exception>

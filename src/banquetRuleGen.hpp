@@ -3,7 +3,6 @@
 #include "Recipe.hpp"
 #include "../config.hpp"
 #include "Calculator.hpp"
-#include "Types.hpp"
 #include <cassert>
 #include "utils/json.hpp"
 #include "States.hpp"

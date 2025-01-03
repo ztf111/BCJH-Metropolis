@@ -14,6 +14,11 @@
 #include "utils/json.hpp"
 #include <map>
 #include <memory> // Include for shared_ptr
+#include "include/cereal/archives/portable_binary.hpp"
+#include "include/cereal/types/memory.hpp"
+#include "include/cereal/types/vector.hpp"
+#include "include/cereal/types/map.hpp"
+#include "include/cereal/types/string.hpp"
 
 class Recipe;
 class CList;
@@ -87,6 +92,10 @@ class Chef {
         tagForCompanyBuff.reset();
     }
     std::string getToolName() const;
+    template <class Archive> void serialize(Archive &archive) {
+        archive(male, female, id, skill, companyBuff, nextBuff,
+                tagForCompanyBuff, tool, name);
+    }
 };
 class CList : public std::vector<Chef> {
     std::map<int, int> id2index;

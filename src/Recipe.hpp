@@ -11,6 +11,10 @@
 #include "Types.hpp"
 #include <vector>
 #include <map>
+#include "include/cereal/archives/portable_binary.hpp"
+#include "include/cereal/types/memory.hpp"
+#include "include/cereal/types/vector.hpp"
+#include "include/cereal/types/map.hpp"
 
 struct DishBuff {
     int dishNum;

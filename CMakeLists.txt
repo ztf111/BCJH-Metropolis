@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.5)
-
 set(CMAKE_CXX_COMPILER "/usr/bin/g++-10")
-# set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_BUILD_TYPE "Debug")
 
 set(PJNAME bcjh)
 project(${PJNAME})
+include_directories(src/include) 
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # require at least gcc 7.1
@@ -36,11 +36,12 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -pthread -Wall -Wextra -Wno-reorder -Wno-unused-parameter")
 endif()
 
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src src)
 
 
 file(GLOB src_list_cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp 
                        ${CMAKE_CURRENT_SOURCE_DIR}/src/*/*.cpp
+                       ${CMAKE_CURRENT_SOURCE_DIR}/src/include/*/*.c
+                       ${CMAKE_CURRENT_SOURCE_DIR}/src/include/*/*.cpp
                       )
 set(src_EMSCRIPTEN  ${src_list_cpp})
 list(REMOVE_ITEM src_EMSCRIPTEN ${CMAKE_CURRENT_SOURCE_DIR}/src/bcjh_js_cpp.cpp)
@@ -78,6 +79,8 @@ else()
     set(target_WINDOWS ${PJNAME}_win)
     add_executable(${target_WINDOWS} ${src_WINDOWS})
     target_compile_definitions(${target_WINDOWS} PRIVATE -D_WIN32)
+    set(CMAKE_MAKE_PROGRAM "${CMAKE_MAKE_PROGRAM} -j$(nproc)")
+
 endif()
 
 
