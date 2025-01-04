@@ -84,8 +84,7 @@ std::string
 #endif
     runjs(const std::string &userDataIn, const std::string &ruleDataIn,
           int targetScore, int iterChef = 5000, int iterRecipe = 1000,
-          bool allowTool = true
-//   , const std::string &recover_string = ""
+          bool allowTool = true, const std::string &recover_string = ""
 #ifdef EMSCRIPTEN_PROGRESS
           ,
           emscripten::val postProgress = emscripten::val::null()

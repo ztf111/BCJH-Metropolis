@@ -29,13 +29,18 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
     message(STATUS "Now is Emscripten")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20")
     add_definitions(-DEMSCRIPTEN)
+    add_definitions(-DNOJIT) # EMS doesn't really work with SSE2, even with proper headers and flags?
     add_definitions(-Dunix)
-    add_compile_options("-fwasm-exceptions")
-    # execute_process(COMMAND bash assets/removeSpaces.sh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    add_definitions()
+    # add_compile_options("-fwasm-exceptions")
+    # add_compile_options("-fsanitize=address")
+    execute_process(COMMAND bash assets/removeSpaces.sh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     message(STATUS "Spaces and newlines in data.min.json have been removed.")
 else()
     set(CMAKE_CXX_STANDARD 20)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -pthread -Wall -Wextra -Wno-reorder -Wno-unused-parameter")
+    # add_definitions(-DNOJIT) # EMS doesn't really work with SSE2?
+
 endif()
 
 
@@ -64,15 +69,15 @@ if (CMAKE_SYSTEM_NAME MATCHES "Emscripten")
     # set multithread make
     set(CMAKE_MAKE_PROGRAM "${CMAKE_MAKE_PROGRAM} -j$(nproc)")
     
-    foreach(i 2 1 3)
+    foreach(i 2 )
         set(target_name ${PJNAME}_${i})
         add_executable(${target_name} ${src_EMSCRIPTEN})
         target_compile_definitions(${target_name} PRIVATE -DNUM_GUESTS=${i})
         set_target_properties(${target_name} PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/data/data.min.json)
-        set_target_properties(${target_name} PROPERTIES LINK_FLAGS "--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/data/data.min.json@./data.min.json -lembind -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=run")
+        set_target_properties(${target_name} PROPERTIES LINK_FLAGS "--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/data/data.min.json@./data.min.json -lembind -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=run -sSTACK_SIZE=512kb") #512k for zpaq
         # Add -O0 and -fexceptions to LINK_FLAGS when -DCMAKE_BUILD_TYPE=Debug; ow. -O3
         set_target_properties(${target_name} PROPERTIES LINK_FLAGS_DEBUG "-O0 -fexceptions -fwasm-exceptions")
-        set_target_properties(${target_name} PROPERTIES LINK_FLAGS_RELEASE "-O3 -fwasm-exceptions")
+        set_target_properties(${target_name} PROPERTIES LINK_FLAGS_RELEASE "-O3")
     endforeach()
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
     add_executable(${PJNAME} ${src_WINDOWS})

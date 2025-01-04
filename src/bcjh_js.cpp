@@ -59,14 +59,13 @@ std::string
     EMSCRIPTEN_KEEPALIVE
 #endif
     runjs(const std::string &userDataIn, const std::string &ruleDataIn,
-          int targetScore, int iterChef, int iterRecipe, bool allowTool
-//   ,const std::string &recover_string
+          int targetScore, int iterChef, int iterRecipe, bool allowTool,
+          const std::string &recover_string
 #ifdef EMSCRIPTEN_PROGRESS
           ,
           emscripten::val postProgress
 #endif
     ) {
-    std::string recover_string = "";
     const int T_MAX_CHEF = targetScore / 100;
     const int T_MAX_RECIPE = targetScore / 400;
     SARunner::init(T_MAX_CHEF, T_MAX_RECIPE, iterChef, iterRecipe, targetScore);
@@ -104,9 +103,8 @@ std::string
     // Count time used
     clock_t start, end;
     start = clock();
-    // StatesRecorderString statesRecorder(recover_string, &chefList,
-    // &recipeList); auto stateResumed = statesRecorder.get_states(1)[0];
-    States *stateResumed = nullptr;
+    StatesRecorderString statesRecorder(recover_string, &chefList, &recipeList);
+    auto stateResumed = statesRecorder.get_states(1)[0];
     Result result = run(rl, chefList, recipeList, 0, true, seed
 #ifdef EMSCRIPTEN_PROGRESS
                         ,
@@ -140,7 +138,6 @@ std::string
     result.logs = ss.str();
     // statesRecorder.add_state(&result.state);
     // auto recover_str = statesRecorder.get_encoded_states();
-    std::string recover_str = "";
 #ifdef MEASURE_TIME
     std::cout << "randomRecipeTime: " << randomRecipeTime << std::endl;
     std::cout << "randomChefTime: " << randomChefTime << std::endl;
@@ -151,7 +148,9 @@ std::string
     std::cout << "calculatePriceTime: " << calculatePriceTime << " / "
               << calculatePriceTimeOut << std::endl;
 #endif
-
+    statesRecorder.add_state(&result.state);
+    auto recover_str = statesRecorder.get_encoded_states();
+    // std::cout << recover_str << std::endl;
     auto resultStr = ResultJsonSerializable(result, recover_str).toJson();
 
     return resultStr;

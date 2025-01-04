@@ -148,10 +148,6 @@ int main(int argc, char *argv[]) {
     std::cout << "均分：" << totalScore / num_threads << std::endl;
 #endif
 
-    for (auto iter = Skill::skillList.begin(); iter != Skill::skillList.end();
-         iter++) {
-        auto &s = iter->second;
-    }
     delete statesRecorder;
     MultiThreadProgressBar::destroy();
 }
