@@ -14,16 +14,18 @@
 #include <memory>
 
 bool Chef::coinBuffOn = true;
-CookAbility Chef::globalAbilityBuff;
-int Chef::globalAbilityMale = 0;
-int Chef::globalAbilityFemale = 0;
+Skill Chef::globalSkill;
+Skill Chef::globalSkillMale;
+Skill Chef::globalSkillFemale;
 ToolFileType Chef::toolFileType = NOT_LOADED;
 std::map<int, Skill> Skill::skillList;
 std::map<int, Skill> Skill::globalSkillList;
+std::map<int, Skill> Skill::globalMaleSkillList;
+std::map<int, Skill> Skill::globalFemaleSkillList;
 void initBuff(const Json::Value usrBuff) {
     Chef::setGlobalBuff(CookAbility(usrBuff));
-    Chef::setGlobalAbilityMale(getInt(usrBuff["Male"]));
-    Chef::setGlobalAbilityFemale(getInt(usrBuff["Female"]));
+    Chef::addGlobalAbilityMale(getInt(usrBuff["Male"]));
+    Chef::addGlobalAbilityFemale(getInt(usrBuff["Female"]));
     Chef::setGlobalAbilityAll(getInt(usrBuff["All"]));
 }
 void splitUltimateSkill(std::map<int, int> &ultimateSkills,
@@ -103,7 +105,6 @@ void Chef::loadAppendChef(CList &chefList, int chefRarity,
             chef.modifyTool(NOT_EQUIPPED);
         }
     } else {
-        Tool::allowTool = false;
         for (auto &chef : newChefList) {
             chef.modifyTool(NO_TOOL);
         }
@@ -111,6 +112,60 @@ void Chef::loadAppendChef(CList &chefList, int chefRarity,
 #endif
     chefList.insert(chefList.end(), newChefList.begin(), newChefList.end());
 }
+
+void Chef::loadAppendChefInGame(CList &chefList, int chefRarity,
+                                const Json::Value &gameData,
+                                const Json::Value &usrData, bool allowTool) {
+
+    const Json::Value &chefs = gameData["chefs"];
+    CList newChefList;
+    std::map<int, Json::Value> chefGot;
+    std::map<int, Json::Value> toolsInfo;
+    for (auto chef : usrData["chefs"]) {
+        chefGot[chef["id"].asInt()] = chef;
+    }
+    for (auto tool : gameData["equips"]) {
+        toolsInfo[tool["equipId"].asInt()] = tool;
+    }
+    for (auto chef : chefs) {
+        int id = chef["chefId"].asInt();
+        if (chefGot[id]["got"].asString() == "是") {
+            if (chef["rarity"].asInt() != chefRarity) {
+                continue;
+            }
+            if (chefGot[id]["ult"].asString() == "是") {
+                newChefList.push_back(
+                    Chef(chef, chef["ultimateSkill"].asInt()));
+            } else {
+                newChefList.push_back(Chef(chef, -1));
+            }
+            if (chefGot[id].isMember("equip")) {
+                int equipID = chefGot[id]["equip"].asInt();
+                if (equipID >= 19) {
+                    // 前18个厨具都是不值钱的，装作没有
+                    auto tool = toolsInfo[equipID];
+                    for (auto &skillID : tool["skill"]) {
+                        newChefList.back().addSkill(skillID.asInt());
+                        // Handles skills that do not exist
+                    }
+                    newChefList.back().modifyTool(NO_TOOL);
+                }
+            }
+        }
+    }
+    if (allowTool) {
+        for (auto &chef : newChefList) {
+            chef.modifyTool(NOT_EQUIPPED);
+            // This is safe, as it will automatically skip those with NO_TOOL
+        }
+    } else {
+        for (auto &chef : newChefList) {
+            chef.modifyTool(NO_TOOL);
+        }
+    }
+    chefList.insert(chefList.end(), newChefList.begin(), newChefList.end());
+}
+
 /**
  * Chef
  * @param ultimateSkillId: -1 means no ultimate skill
@@ -139,11 +194,11 @@ Chef::Chef(Json::Value &chef, int ultimateSkillId)
             for (auto tag : tags) {
                 if (tag.asInt() == 1) {
                     this->male = true;
-                    this->skill->ability.add(globalAbilityMale);
+                    *(this->skill) += (globalSkillMale);
                 }
                 if (tag.asInt() == 2) {
                     this->female = true;
-                    this->skill->ability.add(globalAbilityFemale);
+                    *(this->skill) += (globalSkillFemale);
                 }
                 this->tagForCompanyBuff->insert(tag.asInt());
             }
@@ -152,7 +207,7 @@ Chef::Chef(Json::Value &chef, int ultimateSkillId)
         std::cout << chef << std::endl;
         throw std::logic_error("Chef Json Error");
     }
-    this->skill->ability.add(globalAbilityBuff);
+    *(this->skill) += globalSkill;
     this->addSkill(chef["skill"].asInt());
     if (ultimateSkillId != -1) {
         this->addSkill(ultimateSkillId);
@@ -236,6 +291,31 @@ CookAbility::CookAbility(const Json::Value &v) {
         throw std::logic_error("CookAbility: Invalid Json");
     }
 }
+class GlobalTag {
+  public:
+    enum GlobalTagEnum {
+        NO_TAG = -1,
+        DEFAULT_ALL = 0,
+        MALE = 1,
+        FEMALE = 2,
+    };
+
+    GlobalTag() : tag(NO_TAG) {}
+
+    GlobalTag &operator=(GlobalTagEnum newTag) {
+        if (tag == NO_TAG) {
+            tag = newTag;
+        } else if (tag != newTag) {
+            throw std::logic_error(
+                "Cannot reassign GlobalTag to a different value");
+        }
+        return *this;
+    }
+    bool operator==(GlobalTagEnum newTag) { return tag == newTag; }
+
+  private:
+    GlobalTagEnum tag;
+};
 void Skill::loadJson(const Json::Value &v) {
     std::map<std::string, std::string> missingSkills;
     static std::set<std::string> nameOfTools = {"Stirfry", "Bake", "Boil",
@@ -267,9 +347,11 @@ void Skill::loadJson(const Json::Value &v) {
                                                   "Material_Vegetable",
                                                   "SpecialInvitationRate",
                                                   "GuestAntiqueDropRate",
-                                                  "MaterialReduce"};
+                                                  "MaterialReduce",
+                                                  "ExperienceTimeRate"};
     for (auto skillJson : v) {
         int id = skillJson["skillId"].asInt();
+        GlobalTag globalTag;
         for (auto effect : skillJson["effect"]) {
 
             Skill skill;
@@ -283,18 +365,31 @@ void Skill::loadJson(const Json::Value &v) {
             if (type == "Gold_Gain") {
                 skill.pricePercentBuff = value;
             } else if (type == "UseAll") {
+                globalTag = GlobalTag::DEFAULT_ALL;
                 std::string cal = effect["cal"].asString();
                 assert(conditionStr == "Global");
                 int rarity = effect["rarity"].asInt();
                 assert(cal == "Percent");
                 skill.rarityBuff[rarity] += value;
-            }
-
-            else if (type == "MutiEquipmentSkill") {
+            } else if (type == "MaxEquipLimit") {
+                if (conditionStr == "Global") {
+                    globalTag = GlobalTag::DEFAULT_ALL;
+                }
+                int rarity = effect["rarity"].asInt();
+                skill.amountAdd[rarity] += value;
+            } else if (type == "MutiEquipmentSkill") {
                 // 为啥图鉴网接口时muti而不是multi
                 assert(value % 100 == 0);
                 skill.multiToolEffect = 1 + value / 100;
             } else if (nameOfTools.count(type)) {
+                if (conditionStr == "Global") {
+                    if (effect.isMember("tag")) {
+                        globalTag =
+                            GlobalTag::GlobalTagEnum(effect["tag"].asInt());
+                    } else {
+                        globalTag = GlobalTag::DEFAULT_ALL;
+                    }
+                }
                 std::string cal = effect["cal"].asString();
                 CookAbility *ptr = NULL;
                 if (cal == "Abs")
@@ -426,26 +521,18 @@ void Skill::loadJson(const Json::Value &v) {
                     conditionPtr = std::make_shared<GradeBuffCondition>(cvalue);
                 } else if (conditionType == "ExcessCookbookNum") {
                     assert(type == "CookbookPrice" || type == "BasicPrice");
-                    DiscretizedBuff *targetBuff = NULL;
                     if (type == "BasicPrice") {
-                        targetBuff = &skill.rarityBaseBuff;
+                        skill.amountBaseBuff.gte(cvalue, value);
                     } else if (type == "CookbookPrice") {
-                        targetBuff = &skill.rarityBuff;
+                        skill.amountBuff.gte(cvalue, value);
                     }
-                    DiscretizedBuff::Mask rarityUpperBound =
-                        Recipe::moreThan(cvalue);
-                    targetBuff->masked_add(rarityUpperBound, value);
                 } else if (conditionType == "FewerCookbookNum") {
                     assert(type == "CookbookPrice" || type == "BasicPrice");
-                    DiscretizedBuff *targetBuff = NULL;
                     if (type == "BasicPrice") {
-                        targetBuff = &skill.rarityBaseBuff;
+                        skill.amountBaseBuff.lte(cvalue, value);
                     } else if (type == "CookbookPrice") {
-                        targetBuff = &skill.rarityBuff;
+                        skill.amountBuff.lte(cvalue, value);
                     }
-                    DiscretizedBuff::Mask rarityUpperBound =
-                        Recipe::lessThan(cvalue);
-                    targetBuff->masked_add(rarityUpperBound, value);
                 } else if (conditionType == "SameSkill") {
                     conditionPtr =
                         std::make_shared<ThreeSameCookAbilityBuffCondition>();
@@ -479,9 +566,19 @@ void Skill::loadJson(const Json::Value &v) {
             } else {
                 if (globalSkillList.count(id) == 0) {
                     globalSkillList[id] = Skill(GLOBAL);
+                    globalMaleSkillList[id] = Skill(GLOBAL);
+                    globalFemaleSkillList[id] = Skill(GLOBAL);
                 }
                 assert(!conditionPtr);
-                globalSkillList[id] += skill;
+                if (globalTag == GlobalTag::DEFAULT_ALL) {
+                    globalSkillList[id] += skill;
+                } else if (globalTag == GlobalTag::FEMALE) {
+                    globalFemaleSkillList[id] += skill;
+                } else if (globalTag == GlobalTag::MALE) {
+                    globalMaleSkillList[id] += skill;
+                } else {
+                    throw std::logic_error("GlobalTag not set");
+                }
             }
         }
     }

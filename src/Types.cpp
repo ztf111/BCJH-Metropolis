@@ -7,8 +7,6 @@
 #include "include/cereal/types/map.hpp"
 #include "include/cereal/types/string.hpp"
 
-bool Tool::allowTool = true;
-
 int GradeBuffCondition::test(const Skill *s, Recipe **r) {
     if (grade == -1) {
         throw std::runtime_error("GradeBuffCondition::test: grade not set");
@@ -42,6 +40,9 @@ void Skill::operator+=(const Skill &s) {
     this->gradeBuff.add(s.gradeBuff);
     this->pricePercentBuff += s.pricePercentBuff;
     this->baseAddBuff += s.baseAddBuff;
+    this->amountAdd.add(s.amountAdd);
+    this->amountBuff += s.amountBuff;
+    this->amountBaseBuff += s.amountBaseBuff;
     this->conditionalEffects.insert(this->conditionalEffects.end(),
                                     s.conditionalEffects.begin(),
                                     s.conditionalEffects.end());
@@ -278,32 +279,29 @@ void DiscretizedBuff::add(const DiscretizedBuff &r) {
         this->data[i] += r.data[i];
 }
 
-void DiscretizedBuff::print(const std::string &name) const {
+void DiscretizedBuff::print(const std::string &name,
+                            bool use_percentage_instead_of_plus) const {
     int sum = 0;
     for (int i = 0; i < 5; i++) {
         sum += data[i];
     }
     if (sum > 0) {
-        int data_print = 0;
         std::cout << name << ": ";
-        for (int i = 0; i < 5; i++) {
-            data_print += data[i];
-            std::cout << data_print << "% ";
+        if (use_percentage_instead_of_plus) {
+            for (int i = 0; i < 5; i++) {
+
+                std::cout << data[i] << "% ";
+            }
+        } else {
+            for (int i = 0; i < 5; i++) {
+
+                std::cout << "+" << data[i] << " ";
+            }
         }
     }
 }
 
-void DiscretizedBuff::masked_add(Mask m, int value) {
-    bool mask[5] = {std::get<0>(m), std::get<1>(m), std::get<2>(m),
-                    std::get<3>(m), std::get<4>(m)};
-    for (int i = 0; i < 5; i++) {
-        if (mask[i]) {
-            this->data[i] += value;
-        }
-    }
-}
-
-void Skill::print() const {
+void Skill::print(bool printNum) const {
     this->ability.print("\t");
     Printer p("\n加成");
     p.noValue();
@@ -323,6 +321,11 @@ void Skill::print() const {
     }
     this->rarityBuff.print("菜品火数加成");
     this->gradeBuff.print("菜品品级加成");
+    if (printNum) {
+        this->amountAdd.print("菜品数量增加", false);
+    }
+    this->amountBuff.print("菜品数量加成");
+    this->amountBaseBuff.print("菜品基础数量基础加成");
 
     std::cout << std::endl;
 }

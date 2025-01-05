@@ -10,11 +10,16 @@
 #include "../config.hpp"
 #include "exception.hpp"
 #include "utils/math.hpp"
-Recipe::Recipe(Json::Value &recipe) {
+const DishNum Recipe::dishNum;
+Recipe::Recipe(Json::Value &recipe, bool isExpert) {
     this->name = recipe["name"].asString();
     this->id = recipe["recipeId"].asInt();
     this->rarity = recipe["rarity"].asInt();
-    this->price = recipe["price"].asInt();
+    if (isExpert) {
+        this->price = recipe["exPrice"].asInt();
+    } else {
+        this->price = recipe["price"].asInt();
+    }
     this->cookAbility.stirfry = recipe["stirfry"].asInt();
     this->cookAbility.bake = recipe["bake"].asInt();
     this->cookAbility.boil = recipe["boil"].asInt();
@@ -65,9 +70,8 @@ const struct MaterialList {
     int creation[6] = {11, 20, 21, 29, 34, 35};
 } materialList;
 
-void Recipe::print(const std::string &startLine, int priceDirectAdd,
-                   int priceBuffAdd) const {
-    auto rb = rarityBuff[this->rarity - 1];
+void Recipe::print(int totalAmount, const std::string &startLine,
+                   int priceDirectAdd, int priceBuffAdd) const {
     std::stringstream priceDirectAddStr, priceBuffAddStr, origPriceStr,
         finalPriceStr;
     if (priceBuffAdd != 0)
@@ -82,7 +86,7 @@ void Recipe::print(const std::string &startLine, int priceDirectAdd,
     std::cout << this->name << "（" << origPriceStr.str()
               << priceDirectAddStr.str() << priceBuffAddStr.str()
               << finalPriceStr.str() << "）"
-              << ", " << this->rarity << "火 * " << rb.dishNum << std::endl;
+              << ", " << this->rarity << "火 * " << totalAmount << std::endl;
     std::cout << startLine;
     this->cookAbility.print();
     this->materialCategories.print("；");
@@ -91,39 +95,34 @@ void Recipe::print(const std::string &startLine, int priceDirectAdd,
 RList loadRecipe(const Json::Value &gameData, const Json::Value &usrData) {
     RList recipeList;
     auto recipes = gameData["recipes"];
-    auto recipeGot = usrData["repGot"];
-    for (auto recipe : recipes) {
-        int id = recipe["recipeId"].asInt();
-        if (recipeGot[std::to_string(id)].asBool()) {
-            recipeList.push_back(Recipe(recipe));
+    if (usrData["type"].asString() == "in-game") {
+        auto recipeGot = usrData["recipes"];
+        std::map<int, Json::Value> recipeGotMap;
+        for (auto recipe : recipeGot) {
+            recipeGotMap[recipe["id"].asInt()] = recipe;
+        }
+        for (auto recipe : recipes) {
+            int id = recipe["recipeId"].asInt();
+            if (recipeGotMap[id]["got"].asString() == "是") {
+                bool isExpert = recipeGotMap[id]["ex"].asString() == "是";
+                recipeList.push_back(Recipe(recipe, isExpert));
+            }
+        }
+    } else {
+        assert(usrData["type"].asString() == "bcjh");
+        auto recipeGot = usrData["repGot"];
+        for (auto recipe : recipes) {
+            int id = recipe["recipeId"].asInt();
+            if (recipeGot[std::to_string(id)].asBool()) {
+                recipeList.push_back(Recipe(recipe));
+            }
         }
     }
     return recipeList;
 }
 
-// #define jsonStr2Int(v) atoi(v.asCString())
-DishBuff Recipe::rarityBuff[5];
-void Recipe::initRarityBuff(const Json::Value &usrBuff) {
-    DishBuff r[5];
-    r[0].dishNum = 40;
-    r[1].dishNum = 30;
-    r[2].dishNum = 25;
-    r[3].dishNum = 20;
-    r[4].dishNum = 15;
-    r[0].dishNum += getInt(usrBuff["MaxLimit_1"]);
-    r[1].dishNum += getInt(usrBuff["MaxLimit_2"]);
-    r[2].dishNum += getInt(usrBuff["MaxLimit_3"]);
-    r[3].dishNum += getInt(usrBuff["MaxLimit_4"]);
-    r[4].dishNum += getInt(usrBuff["MaxLimit_5"]);
-    r[0].dishBuff = getInt(usrBuff["PriceBuff_1"]);
-    r[1].dishBuff = getInt(usrBuff["PriceBuff_2"]);
-    r[2].dishBuff = getInt(usrBuff["PriceBuff_3"]);
-    r[3].dishBuff = getInt(usrBuff["PriceBuff_4"]);
-    r[4].dishBuff = getInt(usrBuff["PriceBuff_5"]);
-    for (int i = 0; i < 5; i++) {
-        rarityBuff[i] = r[i];
-    }
-}
+// // #define jsonStr2Int(v) atoi(v.asCString())
+
 void Recipe::getMaterials(Json::Value &materialsJson) {
     // this->materials.clear();
     this->materialCategories = Materials();
@@ -165,6 +164,7 @@ void testJsonUpdate(const Json::Value &gameData, const Json::Value &usrData) {
         recipeNumUsr = usrData["recipes"].size();
         chefNumUsr = usrData["chefs"].size();
     } else {
+        assert(usrData["type"].asString() == "bcjh");
         recipeNumUsr = usrData["repGot"].size();
         chefNumUsr = usrData["chefGot"].size();
     }

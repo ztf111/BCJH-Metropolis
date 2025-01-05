@@ -13,17 +13,7 @@
 #include "include/base64/base64.h"
 #include "utils/libzpaq-wrapper.hpp"
 
-struct GlobalAbilityBuff {
-    int globalAbilityMale;
-    int globalAbilityFemale;
-    CookAbility globalAbilityBuff;
-    template <class Archive> void serialize(Archive &archive) {
-        archive(globalAbilityMale, globalAbilityFemale, globalAbilityBuff);
-    }
-};
-
 class StatesSerializer {
-    GlobalAbilityBuff gab;
     CList *cl;
     RList *rl;
 

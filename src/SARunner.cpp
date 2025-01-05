@@ -53,7 +53,7 @@ States SARunner::generateStates(States *initState, const CList *chefList) {
             allChefsId.contains(initState->getChefPtr(j)->id) &&
             !s.repeatedChef(initState->getChefPtr(j), j, j)) {
             Chef chef = chefList->byId(initState->getChefPtr(j)->id);
-            if (Tool::allowTool) {
+            if (chef.getToolType() != NO_TOOL) {
                 chef.modifyTool(initState->getToolType(j));
             }
             s.setChef(j, chef);

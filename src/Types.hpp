@@ -14,7 +14,6 @@
 #include "include/cereal/types/set.hpp"
 
 struct Tool {
-    static bool allowTool;
     ToolEnum type = NOT_EQUIPPED;
     int value = 100;
 
@@ -163,15 +162,84 @@ class DiscretizedBuff {
     int data[5] = {0, 0, 0, 0, 0};
 
   public:
-    typedef std::tuple<bool, bool, bool, bool, bool> Mask;
     /*几火/几级就是几，不用减一*/
     int &operator[](int i) { return data[i - 1]; }
     int operator[](int i) const { return data[i - 1]; }
     void add(const DiscretizedBuff &r);
-    void print(const std::string &name) const;
-    void masked_add(Mask m, int value);
+    void print(const std::string &name,
+               bool use_percentage_instead_of_plus = true) const;
 
     template <class Archive> void serialize(Archive &archive) { archive(data); }
+};
+class AmountBuff {
+  private:
+    int buff[64] = {0};
+
+  public:
+    int operator[](int i) const { return buff[i + 1]; }
+    void gte(int threshold, int value) {
+        int sum = 0;
+        for (int i = threshold - 1; i < 64; i++) {
+            sum += buff[i];
+        }
+    }
+    void lte(int threshold, int value) {
+        int sum = 0;
+        for (int i = 0; i < threshold - 1; i++) {
+            sum += buff[i];
+        }
+    }
+    void operator+=(const AmountBuff &a) {
+        for (int i = 0; i < 64; i++) {
+            buff[i] += a.buff[i];
+        }
+    }
+    void print(const std::string &word) const {
+        bool allZero = true;
+        bool allSame = true;
+        int firstValue = buff[0];
+
+        for (int i = 0; i < 64; ++i) {
+            if (buff[i] != 0) {
+                allZero = false;
+            }
+            if (buff[i] != firstValue) {
+                allSame = false;
+            }
+        }
+
+        if (allZero) {
+            return;
+        }
+        std::cout << word << ": ";
+        if (allSame) {
+            std::cout << firstValue << "%" << std::endl;
+            return;
+        }
+
+        int start = 0;
+        while (start < 64) {
+            int value = buff[start];
+            int end = start;
+            while (end < 64 && buff[end] == value) {
+                ++end;
+            }
+
+            if (start == 0) {
+                std::cout << value << "% (<= " << end << ")";
+            } else if (end == 64) {
+                std::cout << ", " << value << "% (>= " << (start + 1) << ")";
+            } else {
+                std::cout << ", " << value << "% (" << (start + 1) << "~" << end
+                          << ")";
+            }
+
+            start = end;
+        }
+
+        std::cout << std::endl;
+    }
+    template <class Archive> void serialize(Archive &archive) { archive(buff); }
 };
 
 class BuffCondition;
@@ -187,6 +255,8 @@ class Skill {
     // Whenever a new member is added, remember to update the add function.
     static std::map<int, Skill> skillList;
     static std::map<int, Skill> globalSkillList;
+    static std::map<int, Skill> globalMaleSkillList;
+    static std::map<int, Skill> globalFemaleSkillList;
     CookAbility ability;
     CookAbility cookAbilityPercentBuff;
     AbilityBuff abilityBuff;
@@ -198,7 +268,10 @@ class Skill {
     DiscretizedBuff rarityBuff;
     DiscretizedBuff rarityBaseBuff;
     DiscretizedBuff gradeBuff; // 几级就填当前那一级，比它高的不用填。
-    int multiToolEffect = 1;   // 1: 正常, 2: 翻倍
+    AmountBuff amountBuff;
+    AmountBuff amountBaseBuff;
+    DiscretizedBuff amountAdd;
+    int multiToolEffect = 1; // 1: 正常, 2: 翻倍
 
     int pricePercentBuff = 0;
     int baseAddBuff = 0;
@@ -212,7 +285,7 @@ class Skill {
         tmp += s;
         return tmp;
     }
-    void print() const;
+    void print(bool printNum = false) const;
     ~Skill() {} // conditionalEffects should be handled manually.
 
     template <class Archive> void serialize(Archive &archive) {
@@ -220,7 +293,7 @@ class Skill {
                 abilityBuff, abilityBaseBuff, flavorBuff, flavorBaseBuff,
                 materialBuff, materialBaseBuff, rarityBuff, rarityBaseBuff,
                 gradeBuff, multiToolEffect, pricePercentBuff, baseAddBuff,
-                conditionalEffects);
+                conditionalEffects, amountBuff, amountBaseBuff, amountAdd);
     }
 };
 class Skill;

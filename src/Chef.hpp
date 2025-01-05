@@ -26,9 +26,9 @@ class CList;
 class Chef {
     // This class may be copied intensively, so use pointers within.
   private:
-    static CookAbility globalAbilityBuff;
-    static int globalAbilityMale;
-    static int globalAbilityFemale;
+    static Skill globalSkill;
+    static Skill globalSkillMale;
+    static Skill globalSkillFemale;
     void addSkill(int id);
     Tool tool;
     static ToolFileType toolFileType;
@@ -45,29 +45,41 @@ class Chef {
     std::shared_ptr<Skill> companyBuff;
     std::shared_ptr<Skill> nextBuff;
     std::shared_ptr<Tags> tagForCompanyBuff;
+
     Tool getTool() const { return this->tool; }
     ToolEnum getToolType() const { return this->tool.type; }
     bool allowsTool() const { return this->tool.type != NO_TOOL; }
     void setNoTool() { this->tool.type = NO_TOOL; }
     std::vector<Recipe *> *recipeLearned = NULL;
 
-    static void setGlobalBuff(CookAbility buff) { globalAbilityBuff = buff; }
-    static void setGlobalAbilityMale(int ability) {
-        globalAbilityMale = ability;
+    static void setGlobalBuff(Skill skill, Skill male, Skill female) {
+        globalSkill = skill;
+        globalSkillMale = male;
+        globalSkillFemale = female;
     }
-    static void setGlobalAbilityFemale(int ability) {
-        globalAbilityFemale = ability;
-        }
+    static void setGlobalBuff(CookAbility buff) { globalSkill.ability = buff; }
+    static void addGlobalAbilityMale(int ability) {
+        globalSkillMale.ability.add(ability);
+    }
+    static void addGlobalAbilityFemale(int ability) {
+        globalSkillFemale.ability.add(ability);
+    }
     static void setGlobalAbilityAll(int ability) {
-        globalAbilityBuff.add(ability);
+        globalSkill.ability.add(ability);
     }
     static void initBuff(const Json::Value &usrBuff) {
 
         coinBuffOn = true;
+        for (int i = 1; i <= 5; i++) {
+            Chef::globalSkill.rarityBuff[i] +=
+                getInt(usrBuff["PriceBuff_" + std::to_string(i)]);
+            Chef::globalSkill.amountAdd[i] +=
+                getInt(usrBuff["MaxLimit_" + std::to_string(i)]);
+        }
 
         setGlobalBuff(CookAbility(usrBuff));
-        setGlobalAbilityMale(getInt(usrBuff["Male"]));
-        setGlobalAbilityFemale(getInt(usrBuff["Female"]));
+        addGlobalAbilityMale(getInt(usrBuff["Male"]));
+        addGlobalAbilityFemale(getInt(usrBuff["Female"]));
         setGlobalAbilityAll(getInt(usrBuff["All"]));
     }
     static void loadAppendChef(CList &chefList, int chefRarity,
@@ -78,6 +90,10 @@ class Chef {
                                bool allowTool
 #endif
     );
+    static void loadAppendChefInGame(CList &chefList, int chefRarity,
+                                     const Json::Value &gameData,
+                                     const Json::Value &usrData,
+                                     bool allowTool = true);
 
     std::string getName(bool wTool = true) const;
     Chef(Json::Value &v, int ultimateSkillId);

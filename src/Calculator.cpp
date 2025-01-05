@@ -52,14 +52,16 @@ BanquetInfo getPrice(const Skill &skill, Recipe *recipe, BanquetRuleTogether &r,
     for (int i = 1; i <= grade; i++) {
         gradebuff += skill.gradeBuff[i];
     }
-    auto rb = Recipe::rarityBuff[recipe->rarity - 1];
+    int amount =
+        Recipe::dishNum[recipe->rarity] + skill.amountAdd[recipe->rarity];
+    int amount_add = skill.amountBuff[amount];
     const BanquetRule &rule = r.merge();
     int intentionAddBuff = rule.addRule.buff;
     int intentionBaseBuff = rule.baseRule.buff;
     int skillBuff = skill.flavorBuff * recipe->flavor +
                     recipe->cookAbility * skill.abilityBuff +
                     recipe->materialCategories * skill.materialBuff +
-                    (rb.dishBuff + skill.rarityBuff[recipe->rarity]) +
+                    (amount_add + skill.rarityBuff[recipe->rarity]) +
                     (Chef::coinBuffOn ? skill.pricePercentBuff : 0);
     int recipeBaseBuff = skill.baseAddBuff +
                          recipe->cookAbility * skill.abilityBaseBuff +
@@ -71,7 +73,7 @@ BanquetInfo getPrice(const Skill &skill, Recipe *recipe, BanquetRuleTogether &r,
         int_ceil((recipe->price + rule.baseRule.directAdd) *
                  (1.0 + (intentionBaseBuff + recipeBaseBuff) / 100.0) *
                  (1.0 + buff / 100.0));
-    int totalPrice = singlePrice * rb.dishNum;
+    int totalPrice = singlePrice * amount;
     int full;
     if (rule.addRule.fullAdd) {
         full = recipe->rarity + rule.addRule.full;
@@ -86,7 +88,8 @@ BanquetInfo getPrice(const Skill &skill, Recipe *recipe, BanquetRuleTogether &r,
                                 recipe->cookAbility * skill.abilityBuff);
         skillPercentPrinter.add("食材", recipe->materialCategories *
                                             skill.materialBuff);
-        skillPercentPrinter.add("火数修炼", rb.dishBuff);
+        skillPercentPrinter.add("火数", skill.rarityBuff[recipe->rarity]);
+        skillPercentPrinter.add("数量增益", amount_add);
         skillPercentPrinter.add(
             "金币", (Chef::coinBuffOn ? skill.pricePercentBuff : 0));
 
@@ -106,7 +109,7 @@ BanquetInfo getPrice(const Skill &skill, Recipe *recipe, BanquetRuleTogether &r,
         intentionPrinter.add("售价", intentionAddBuff, true);
 
         std::cout << "╭─> ";
-        recipe->print("│ ");
+        recipe->print(amount, "│ ");
         std::cout << "" << gradeName(grade) << " +" << gradebuff << "%"
                   << std::endl;
         skillPrinter.print("│ ", " + ", "\n");

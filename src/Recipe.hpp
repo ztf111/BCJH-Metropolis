@@ -16,9 +16,11 @@
 #include "include/cereal/types/vector.hpp"
 #include "include/cereal/types/map.hpp"
 
-struct DishBuff {
-    int dishNum;
-    int dishBuff = 0;
+class DishNum {
+    const int dishNum[5] = {40, 30, 25, 20, 15};
+
+  public:
+    int operator[](int i) const { return dishNum[i - 1]; }
 };
 class Materials {
   public:
@@ -74,34 +76,10 @@ class Recipe {
     }
 
   public:
-    static DishBuff rarityBuff[5];
+    static const DishNum dishNum;
     /**
      * @return 小于等于返回值火数的都可以做到这么多份
      */
-    static DiscretizedBuff::Mask moreThan(int dishNumTargetMin) {
-        if (rarityBuff[0].dishNum == 0) {
-            std::cout << "需要先load Recipes (init rarityBuff)再loadSkills"
-                      << std::endl;
-            exit(1);
-        }
-        bool mask[5] = {false};
-        for (int i = 0; i < 5; i++) {
-            mask[i] = rarityBuff[i].dishNum >= dishNumTargetMin;
-        }
-        return std::make_tuple(mask[0], mask[1], mask[2], mask[3], mask[4]);
-    }
-    static DiscretizedBuff::Mask lessThan(int dishNumTargetMax) {
-        if (rarityBuff[0].dishNum == 0) {
-            std::cout << "需要先load Recipes (init rarityBuff)再loadSkills"
-                      << std::endl;
-            exit(1);
-        }
-        bool mask[5] = {false};
-        for (int i = 0; i < 5; i++) {
-            mask[i] = rarityBuff[i].dishNum <= dishNumTargetMax;
-        }
-        return std::make_tuple(mask[0], mask[1], mask[2], mask[3], mask[4]);
-    }
     std::string name;
     int id;
     int rarity;
@@ -111,11 +89,10 @@ class Recipe {
     Materials materialCategories;
     CookAbility cookAbility;
     FlavorEnum flavor;
-    Recipe(Json::Value &recipe);
+    Recipe(Json::Value &recipe, bool isExpert = false);
     Recipe() : flavor(UNIDENTIFIED_FLAVOR) {}
-    void print(const std::string &startLine = "", int priceDirectAdd = 0,
-               int priceBuffAdd = 0) const;
-    static void initRarityBuff(const Json::Value &usrBuff);
+    void print(int totalAmount, const std::string &startLine = "",
+               int priceDirectAdd = 0, int priceBuffAdd = 0) const;
 };
 class RList : public std::vector<Recipe> {
     std::map<int, Recipe *> id2index;

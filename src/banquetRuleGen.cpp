@@ -121,6 +121,8 @@ Rule *getRuleFromJson(const Json::Value &intent, int dish,
         } else {
             std::cout << "Unknown condition type: " << conditionType
                       << std::endl;
+            throw std::runtime_error("Unknown condition type: " +
+                                     conditionType);
         }
     } else {
         c = new AlwaysTrueCondition(dish);
@@ -153,6 +155,9 @@ Rule *getRuleFromJson(const Json::Value &intent, int dish,
                                        allIntents, allBuffs, 1);
         e = new CreatePhaseRulesEffect(newRule, DISH_PER_CHEF * lastRounds,
                                        true);
+    } else {
+        std::cout << "Unknown effect type: " << effectType << std::endl;
+        throw std::runtime_error("Unknown effect type: " + effectType);
     }
     return new SingleConditionRule(c, e);
 }

@@ -6,6 +6,7 @@ import platform
 
 args=argparse.ArgumentParser()
 args.add_argument('-i', '--id',type=int)
+args.add_argument('--BCJH',type=str)
 args=args.parse_args()
 def UTF8ToGBK(file):
     with open(file, 'r', encoding='utf-8') as f:
@@ -21,7 +22,9 @@ def download(url,fn):
 if args.id:
     print(args.id)
     download(f"https://bcjh.xyz/api/download_data?id={args.id}",'userData.json')
-
+if args.BCJH:
+    print(args.BCJH)
+    download("https://yx518.com/api/archive.do?token="+args.BCJH,'directUserData.json')
 download("https://bcjh.xyz/api/get_banquet_rule",'ruleData.json')
 
     

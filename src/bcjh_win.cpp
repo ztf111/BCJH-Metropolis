@@ -90,6 +90,8 @@ int main(int argc, char *argv[]) {
         loadJsonFiles();
     if (directUserData.size() != 0) {
         usrData = directUserData;
+        std::cout << GREEN << "读取到游戏中直接导出的数据，不使用白采菊花数据。"
+                  << NO_FORMAT << std::endl;
     }
     testJsonUpdate(gameData, usrData);
     RuleInfo rl;
@@ -230,7 +232,8 @@ loadJsonFiles() {
                   << NO_FORMAT << std::endl;
         std::stringstream data(usrData["data"].asCString());
         data >> usrData;
-        usrData["type"] = Json::Value("bcjh");
+        // Convert the escaped string to an object
+        usrData["type"] = "bcjh";
     }
     if (directUsrData["ret"].asString() == "E") {
         std::cout << "游戏数据错误，请检查游戏中导出的代码是否填写正确。"
@@ -238,7 +241,7 @@ loadJsonFiles() {
         directUsrData = Json::Value();
     } else {
         directUsrData = directUsrData["msg"];
-        directUsrData["type"] = Json::Value("in-game");
+        directUsrData["type"] = "in-game";
     }
 
     return {std::move(directUsrData), std::move(usrData), std::move(gameData),

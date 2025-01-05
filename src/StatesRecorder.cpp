@@ -14,12 +14,10 @@ void StatesSerializer::serialize(std::ostream &stream, States *state) {
     for (int i = 0; i < NUM_CHEFS * DISH_PER_CHEF; i++) {
         recipe[i] = state->recipe[i] == NULL ? -1 : state->recipe[i]->id;
     }
-    GlobalAbilityBuff gab{Chef::globalAbilityMale, Chef::globalAbilityFemale,
-                          Chef::globalAbilityBuff};
     std::stringstream oss;
     {
         cereal::PortableBinaryOutputArchive archive(oss);
-        archive(chefs, recipe, gab);
+        archive(chefs, recipe);
     }
     compress(oss, stream);
 }
@@ -31,7 +29,7 @@ States *StatesSerializer::deserialize(std::istream &stream) {
     std::stringstream iss;
     decompress(stream, iss);
     cereal::PortableBinaryInputArchive archive(iss);
-    archive(chefs, recipe, this->gab);
+    archive(chefs, recipe);
 
     for (int i = 0; i < NUM_CHEFS; i++) {
         state->setChef(i, chefs[i]);
