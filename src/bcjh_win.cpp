@@ -23,7 +23,8 @@ const int targetScore = TARGET_SCORE_APPROXIMATE;
 const int T_MAX_CHEF = T_MAX_CHEF_orig;
 const int T_MAX_RECIPE = T_MAX_RECIPE_orig;
 
-std::tuple<Json::Value, Json::Value, Json::Value, std::size_t> loadJsonFiles();
+std::tuple<Json::Value, Json::Value, Json::Value, Json::Value, std::size_t>
+loadJsonFiles();
 
 std::tuple<bool, int, bool, int, int, int, std::string>
 parseArgs(int argc, char *argv[]) {
@@ -85,7 +86,11 @@ int main(int argc, char *argv[]) {
     auto [silent, log, mp, seed, iterChef, iterRecipe, recover_str] =
         parseArgs(argc, argv);
     SARunner::init(T_MAX_CHEF, T_MAX_RECIPE, iterChef, iterRecipe, targetScore);
-    auto [usrData, gameData, ruleData, fileHash] = loadJsonFiles();
+    auto [directUserData, usrData, gameData, ruleData, fileHash] =
+        loadJsonFiles();
+    if (directUserData.size() != 0) {
+        usrData = directUserData;
+    }
     testJsonUpdate(gameData, usrData);
     RuleInfo rl;
     loadFirstBanquetRule(rl, ruleData, true);
@@ -153,19 +158,23 @@ int main(int argc, char *argv[]) {
 }
 
 /**
- * @return userData, gameData, ruleData
+ * @return directUserData, userData, gameData, ruleData
  */
-std::tuple<Json::Value, Json::Value, Json::Value, std::size_t> loadJsonFiles() {
+std::tuple<Json::Value, Json::Value, Json::Value, Json::Value, std::size_t>
+loadJsonFiles() {
     Json::Value usrData;
     Json::Value gameData;
     Json::Value ruleData;
+    Json::Value directUsrData;
 
-    auto dirs = {"./", "../data/", "../../data/"};
+    auto dirs = {"./", "../data/", "../../data/", "../../../data/"};
 
-    std::ifstream gameDataF, usrDataF, ruleDataF;
-    std::map<std::string, std::ifstream &> files = {{"data.min", gameDataF},
-                                                    {"userData", usrDataF},
-                                                    {"ruleData", ruleDataF}};
+    std::ifstream gameDataF, usrDataF, ruleDataF, directUsrDataF;
+    std::map<std::string, std::ifstream &> files = {
+        {"data.min", gameDataF},
+        {"userData", usrDataF},
+        {"ruleData", ruleDataF},
+        {"directUserData", directUsrDataF}};
     for (auto &file : files) {
         for (const std::string &dir : dirs) {
             file.second.open(dir + file.first + ".json", std::ifstream::binary);
@@ -176,24 +185,30 @@ std::tuple<Json::Value, Json::Value, Json::Value, std::size_t> loadJsonFiles() {
         }
     }
 
-    if (!usrDataF.good() || !gameDataF.good() || !ruleDataF.good()) {
-
+    if (!gameDataF.good() || !ruleDataF.good() ||
+        (!usrDataF.good() && !directUsrDataF.good())) {
         std::cout
             << "json文件有缺失。如果在网页端，请确认已经上传了文件；如果在"
-               "本地，请确认已经data.min.json、userData.json和ruleData."
-               "json三个文件已经在工作目录下。\n";
+               "本地，请确认已经data.min.json和ruleData."
+               "json文件已经在工作目录下，而且directUserData.json或userData."
+               "json文件已经在工作目录下。\n";
         exit(1);
     }
 
     try {
-        usrDataF >> usrData;
-        usrDataF.close();
+        if (usrDataF.good()) {
+            usrDataF >> usrData;
+            usrDataF.close();
+        }
+        if (directUsrDataF.good()) {
+            directUsrDataF >> directUsrData;
+            directUsrDataF.close();
+        }
         gameDataF >> gameData;
         gameDataF.close();
         ruleDataF >> ruleData;
         ruleDataF.close();
     } catch (Json::RuntimeError &) {
-
         std::cout
             << "json文件格式不正确。如果文件内容是手动复制的，确认文件已"
                "经复制完整。如果文件是从powershell下载的，请确认编码是utf-8\n";
@@ -206,7 +221,8 @@ std::tuple<Json::Value, Json::Value, Json::Value, std::size_t> loadJsonFiles() {
     std::hash<std::string> hasher;
     size_t fileHash = hasher(gameData.toStyledString()) ^
                       hasher(usrData.toStyledString()) ^
-                      hasher(ruleData.toStyledString());
+                      hasher(ruleData.toStyledString()) ^
+                      hasher(directUsrData.toStyledString());
 
     if (usrData.isMember("user")) {
         std::cout << GREEN "用户名：" << usrData["user"].asString()
@@ -214,7 +230,17 @@ std::tuple<Json::Value, Json::Value, Json::Value, std::size_t> loadJsonFiles() {
                   << NO_FORMAT << std::endl;
         std::stringstream data(usrData["data"].asCString());
         data >> usrData;
+        usrData["type"] = Json::Value("bcjh");
     }
-    return {std::move(usrData), std::move(gameData), std::move(ruleData),
-            fileHash};
+    if (directUsrData["ret"].asString() == "E") {
+        std::cout << "游戏数据错误，请检查游戏中导出的代码是否填写正确。"
+                  << std::endl;
+        directUsrData = Json::Value();
+    } else {
+        directUsrData = directUsrData["msg"];
+        directUsrData["type"] = Json::Value("in-game");
+    }
+
+    return {std::move(directUsrData), std::move(usrData), std::move(gameData),
+            std::move(ruleData), fileHash};
 }

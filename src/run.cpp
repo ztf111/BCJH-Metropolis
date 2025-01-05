@@ -33,11 +33,38 @@ Result run(const RuleInfo &rl, const CList &chefList, RList &recipeList,
     return Result{score, seed, s, ""};
 }
 
-std::tuple<RList, CList> loadJson(const Json::Value &gameData,
-                                  const Json::Value &userData
+Json::Value _reconstructUserUltimate(const Json::Value &gameData,
+                                     const Json::Value &directUserData) {
+
+    // \"decoBuff\":\"\",\"Stirfry\":0,\"Boil\":0,\"Knife\":0,\"Fry\":0,\"Bake\":0,\"Steam\":0,\"Male\":0,\"Female\":0,\"All\":\"1
+    // \"MaxLimit_1\":0,\"MaxLimit_2\":0,\"MaxLimit_3\":1,\"MaxLimit_4\":0,\"MaxLimit_5\":0,\"PriceBuff_1\":0,\"PriceBuff_2\":0,\"PriceBuff_3\":0,\"PriceBuff_4\":0,\"PriceBuff_5\":0}
+    try {
+        Skill::loadJson(gameData["skills"]);
+    } catch (const Json::RuntimeError &) {
+        std::cout << "json文件格式不正确。如果文件内容是手动复制的，确认文件已"
+                     "经复制完整。\n";
+    } catch (const Json::LogicError &) {
+        std::cout << "json文件格式不正确。请确认文件来自白菜菊花而非图鉴网。\n";
+    } catch (const UnknownSkillException &e) {
+        std::cout << e.what() << std::endl;
+    }
+    // uc=[c["id"] for c in directUserData["chefs"] if c["ult"]=="是"]
+    Skill globalBuff;
+    for (const auto &c : directUserData["chefs"]) {
+        if (c["ult"].asString() == "是") {
+            globalBuff += Skill::globalSkillList[c["id"].asInt()];
+        }
+    }
+}
+std::tuple<RList, CList> _loadJsonInGame(const Json::Value &gameData,
+                                         const Json::Value &userData) {
+    _reconstructUserUltimate(gameData, userData);
+}
+std::tuple<RList, CList> _loadJsonBCJH(const Json::Value &gameData,
+                                       const Json::Value &userData
 #ifndef _WIN32
-                                  ,
-                                  bool allowTool
+                                       ,
+                                       bool allowTool
 #endif
 ) {
     RList recipeList;
@@ -80,4 +107,23 @@ std::tuple<RList, CList> loadJson(const Json::Value &gameData,
     recipeList.initIDMapping();
     chefList.initIDMapping();
     return {std::move(recipeList), std::move(chefList)};
+}
+
+std::tuple<RList, CList> loadJson(const Json::Value &gameData,
+                                  const Json::Value &userData
+#ifndef _WIN32
+                                  ,
+                                  bool allowTool
+#endif
+) {
+    if (userData["type"] == "bcjh") {
+        return _loadJsonBCJH(gameData, userData
+#ifndef _WIN32
+                             ,
+                             allowTool
+#endif
+        );
+    } else {
+        return _loadJsonInGame(gameData, userData);
+    }
 }

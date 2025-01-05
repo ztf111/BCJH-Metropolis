@@ -181,11 +181,12 @@ typedef std::vector<std::shared_ptr<ConditionalBuff>> ConditionalEffects;
 class Skill {
 
   public:
-    enum Type { SELF, NEXT, PARTIAL, UNSET };
+    enum Type { SELF, NEXT, PARTIAL, UNSET, GLOBAL };
     Type type = UNSET;
     Tags chefTagsForPARTIAL;
     // Whenever a new member is added, remember to update the add function.
     static std::map<int, Skill> skillList;
+    static std::map<int, Skill> globalSkillList;
     CookAbility ability;
     CookAbility cookAbilityPercentBuff;
     AbilityBuff abilityBuff;

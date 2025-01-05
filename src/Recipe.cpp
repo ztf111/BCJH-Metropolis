@@ -160,9 +160,16 @@ void Recipe::getMaterials(Json::Value &materialsJson) {
 }
 
 void testJsonUpdate(const Json::Value &gameData, const Json::Value &usrData) {
-    int recipeNumUsr = usrData["repGot"].size();
+    int recipeNumUsr, chefNumUsr;
+    if (usrData["type"].asString() == "in-game") {
+        recipeNumUsr = usrData["recipes"].size();
+        chefNumUsr = usrData["chefs"].size();
+    } else {
+        recipeNumUsr = usrData["repGot"].size();
+        chefNumUsr = usrData["chefGot"].size();
+    }
+
     int recipeNumGame = gameData["recipes"].size();
-    int chefNumUsr = usrData["chefGot"].size();
     int chefNumGame = gameData["chefs"].size();
 
     if (recipeNumUsr > recipeNumGame) {

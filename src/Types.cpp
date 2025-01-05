@@ -60,7 +60,7 @@ void Skill::operator+=(const Skill &s) {
         this->chefTagsForPARTIAL = s.chefTagsForPARTIAL;
         this->type = s.type;
     }
-    if (this->type == PARTIAL || this->type == NEXT) {
+    if (this->type == PARTIAL || this->type == NEXT || this->type == GLOBAL) {
         assert(this->type == s.type);
         // Only Unset and Self can merge with different types.
     }
