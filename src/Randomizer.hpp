@@ -33,13 +33,13 @@ class Randomizer {
     const RuleInfo *rl;
     int success;
     int calls;
-    Randomizer(const CList *c, RList *r, const RuleInfo *rl)
-        : c(c), r(r), rl(rl), success(0), calls(0) {}
+    Randomizer(const CList *c, RList *r, const RuleInfo *rl);
     Randomizer() : success(0), calls(0) {}
     virtual States operator()(States s) = 0;
     virtual ~Randomizer() {}
 
   protected:
+    std::map<int, std::vector<int>> rarityRecipeMap;
     bool swapRecipe(States &s) const;
     bool unrepeatedRandomRecipe(const Skill &skill, Recipe **rs, int size,
                                 int index,

@@ -106,16 +106,16 @@ StatesRecorderFile::StatesRecorderFile(std::string filename, std::size_t id,
         std::string decoded_id = base64_decode(encoded_id);
         std::size_t file_id =
             *reinterpret_cast<const std::size_t *>(decoded_id.data());
-        if (file_id == id) {
-            std::istringstream inputStream(
-                std::string((std::istreambuf_iterator<char>(inputFile)),
-                            std::istreambuf_iterator<char>()));
-            deserialize_states(inputStream);
-            std::cout << "从存档点" << id << "恢复" << states.size()
-                      << "条记录。若要重新开始，请删除同一目录下states."
-                         "txt文件。"
-                      << std::endl;
-        }
+        // if (file_id == id) {
+        std::istringstream inputStream(
+            std::string((std::istreambuf_iterator<char>(inputFile)),
+                        std::istreambuf_iterator<char>()));
+        deserialize_states(inputStream);
+        std::cout << "从存档点" << id << "恢复" << states.size()
+                  << "条记录。若要重新开始，请删除同一目录下states."
+                     "txt文件。"
+                  << std::endl;
+            // }
     }
     inputFile.close();
     this->id = id;

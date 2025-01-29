@@ -7,30 +7,47 @@ double randomChefTime = 0;
 double banquetRuleTime = 0;
 double generateBanquetRuleTime = 0;
 double generateBanquetRuleTimeOut = 0;
-const Json::Value &getIntentById(const Json::Value &intentsGD, int intentId) {
-    for (auto &intent : intentsGD) {
-        if (intent["intentId"].asInt() == intentId) {
-            return intent;
+
+typedef std::map<int, Json::Value> GDMap;
+
+const Json::Value &getIntentBuffById(const GDMap &GD, int Id) {
+    auto it = GD.find(Id);
+    if (it == GD.end()) {
+        bool isBuff = GD.begin()->second.isMember("buffId");
+        if (isBuff) {
+            throw std::runtime_error("Buff not found " + std::to_string(Id));
+        } else {
+            throw std::runtime_error("Intent not found " + std::to_string(Id));
         }
     }
-    throw std::runtime_error("Intent not found " + std::to_string(intentId));
+    return it->second;
 }
-const Json::Value &getBuffById(const Json::Value &intentsGD, int intentId) {
-    for (auto &intent : intentsGD) {
-        if (intent["buffId"].asInt() == intentId) {
-            return intent;
-        }
-    }
-    throw std::runtime_error("Buff not found " + std::to_string(intentId));
-}
-Rule *getRuleFromJson(const Json::Value &intent, int d,
-                      const Json::Value &allIntents,
-                      const Json::Value &allBuffs,
+/**
+ * @deprecated
+ */
+// const Json::Value &getIntentById(const Json::Value &intentsGD, int intentId)
+// {
+//     for (auto &intent : intentsGD) {
+//         if (intent["intentId"].asInt() == intentId) {
+//             return intent;
+//         }
+//     }
+//     throw std::runtime_error("Intent not found " + std::to_string(intentId));
+// }
+// const Json::Value &getBuffById(const Json::Value &intentsGD, int intentId) {
+//     for (auto &intent : intentsGD) {
+//         if (intent["buffId"].asInt() == intentId) {
+//             return intent;
+//         }
+//     }
+//     throw std::runtime_error("Buff not found " + std::to_string(intentId));
+// }
+Rule *getRuleFromJson(const Json::Value &intent, int d, const GDMap &allIntents,
+                      const GDMap &allBuffs,
                       int remainingDishes = DISH_PER_CHEF);
 
 int loadBanquetRuleFromJson(RuleInfo &ruleInfo, const Json::Value &rulesTarget,
-                            const Json::Value &allBuffs,
-                            const Json::Value &allIntents) {
+                            const GDMap &allBuffs, const GDMap &allIntents) {
     int d = 0;
     int num_guest = 0;
     for (auto &guest : rulesTarget) {
@@ -39,9 +56,19 @@ int loadBanquetRuleFromJson(RuleInfo &ruleInfo, const Json::Value &rulesTarget,
             guest["Satiety"].asInt();
         auto &intents = guest["IntentList"];
         for (auto &phaseIntents : intents) {
+            if (guest.isMember("GlobalBuffList")) {
+                auto &globalBuffs = guest["GlobalBuffList"];
+                // Add global buff to this list
+                for (auto &buffId : globalBuffs) {
+                    auto &buffContent =
+                        getIntentBuffById(allBuffs, buffId.asInt());
+                    ruleInfo.rl.push_back(
+                        getRuleFromJson(buffContent, d, allIntents, allBuffs));
+                }
+            }
             for (auto &intent : phaseIntents) {
                 int intentId = intent.asInt();
-                auto &intentContent = getIntentById(allIntents, intentId);
+                auto &intentContent = getIntentBuffById(allIntents, intentId);
                 ruleInfo.rl.push_back(
                     getRuleFromJson(intentContent, d, allIntents, allBuffs));
             }
@@ -59,6 +86,14 @@ int loadFirstBanquetRule(RuleInfo &ruleInfo, const Json::Value &gameData,
     auto &buffsGD = gameData["buffs"];
     auto &intentsGD = gameData["intents"];
     auto &rulesGD = gameData["rules"];
+    std::map<int, Json::Value> buffsMap;
+    for (auto &buff : buffsGD) {
+        buffsMap[buff["buffId"].asInt()] = buff;
+    }
+    std::map<int, Json::Value> intentsMap;
+    for (auto &intent : intentsGD) {
+        intentsMap[intent["intentId"].asInt()] = intent;
+    }
     // find the rule in rulesGD with Id ruleID
     Json::Value ruleGD = rulesGD[0];
     if (print) {
@@ -74,7 +109,7 @@ int loadFirstBanquetRule(RuleInfo &ruleInfo, const Json::Value &gameData,
         std::cout << "规则为空。" << std::endl;
         return -1;
     }
-    return loadBanquetRuleFromJson(ruleInfo, rulesTarget, buffsGD, intentsGD);
+    return loadBanquetRuleFromJson(ruleInfo, rulesTarget, buffsMap, intentsMap);
 }
 
 int loadBanquetRuleFromInput(RuleInfo &ruleInfo, const Json::Value &ruleData,
@@ -89,11 +124,19 @@ int loadBanquetRuleFromInput(RuleInfo &ruleInfo, const Json::Value &ruleData,
     }
     auto &buffs = ruleData["buffs"];
     auto &intents = ruleData["intents"];
-    return loadBanquetRuleFromJson(ruleInfo, rulesTarget, buffs, intents);
+    std::map<int, Json::Value> buffsMap;
+    for (auto &buff : buffs) {
+        buffsMap[buff["buffId"].asInt()] = buff;
+    }
+    std::map<int, Json::Value> intentsMap;
+    for (auto &intent : intents) {
+        intentsMap[intent["intentId"].asInt()] = intent;
+    }
+    return loadBanquetRuleFromJson(ruleInfo, rulesTarget, buffsMap, intentsMap);
 }
 Rule *getRuleFromJson(const Json::Value &intent, int dish,
-                      const Json::Value &allIntents,
-                      const Json::Value &allBuffs, int remainingDishes) {
+                      const GDMap &allIntents, const GDMap &allBuffs,
+                      int remainingDishes) {
     Condition *c;
     auto effectType = intent["effectType"].asString();
     auto effectValue = intent["effectValue"].asInt();
@@ -142,14 +185,14 @@ Rule *getRuleFromJson(const Json::Value &intent, int dish,
     } else if (effectType == "IntentAdd") {
         e = new IntentAddEffect();
     } else if (effectType == "CreateIntent") {
-        auto newIntent = getIntentById(allIntents, effectValue);
+        auto newIntent = getIntentBuffById(allIntents, effectValue);
         auto newRule =
             getRuleFromJson(newIntent, dish + 1, allIntents, allBuffs, 1);
         e = new NextRuleEffect(newRule);
 
     } else if (effectType == "CreateBuff") {
         // 下（两）阶段blahblah
-        auto newIntent = getBuffById(allBuffs, effectValue);
+        auto newIntent = getIntentBuffById(allBuffs, effectValue);
         int lastRounds = getInt(newIntent["lastRounds"]);
         auto newRule = getRuleFromJson(newIntent, dish + DISH_PER_CHEF,
                                        allIntents, allBuffs, 1);

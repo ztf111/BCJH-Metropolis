@@ -220,14 +220,34 @@ States ChefRandomizer::operator()(States s) {
 #endif
     return saRunner.run(&s);
 }
+Randomizer::Randomizer(const CList *c, RList *r, const RuleInfo *rl)
+    : c(c), r(r), rl(rl), success(0), calls(0) {
+    for (int rarity = 1; rarity <= 5; rarity++) {
+        rarityRecipeMap[rarity] = std::vector<int>();
+    }
+    for (auto &recipe : *r) {
+        rarityRecipeMap[recipe.rarity].push_back(recipe.id);
+    }
+}
 bool Randomizer::unrepeatedRandomRecipe(const Skill &skill, Recipe **recipes,
                                         int size, int index,
                                         int repeats) const {
     int count = 0;
     Recipe *r;
     auto &rl = this->r;
+    float p_sameRarity = 0.4;
     do {
-        r = &rl->at(rand() % rl->size());
+        if (rand() / RAND_MAX < p_sameRarity) {
+            int rarity = recipes[index]->rarity;
+            if (rarityRecipeMap.at(rarity).size() == 1) {
+                p_sameRarity = 0;
+            } else {
+                r = &rl->at(rarityRecipeMap.at(
+                    rarity)[rand() % rarityRecipeMap.at(rarity).size()]);
+            }
+        } else {
+            r = &rl->at(rand() % rl->size());
+        }
         count++;
     } while (
         ((skill.ability / r->cookAbility == 0) || inArray(recipes, size, r)) &&
