@@ -290,7 +290,9 @@ class SingleConditionRule : public Rule {
 };
 struct RuleInfo {
     std::vector<Rule *> rl;
-    int bestFull[NUM_GUESTS];
+    // int bestFull[NUM_GUESTS];
+    std::vector<int> bestFull;
+    RuleInfo() : bestFull(NUM_GUESTS, 0) {}
     ~RuleInfo() {
         for (auto &r : rl) {
             delete r;

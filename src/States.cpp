@@ -11,15 +11,15 @@ template <typename T> inline void copy(T *dst, const T *src, int n) {
 void mergeSkills(Skill *skillsResult, const Skill *selfSkills,
                  const Skill *companyBuffs, const Skill *nextBuffs,
                  Tags *const *tagOfCompanyBuff, const Chef *chefs) {
-    for (int i = 0; i < NUM_CHEFS; i++) {
+    for (size_t i = 0; i < NUM_CHEFS; i++) {
         skillsResult[i] = selfSkills[i];
         skillsResult[i].ability.add(Ability(chefs[i].getTool()));
     }
     // 光环
-    for (int g = 0; g < NUM_GUESTS; g++) {
-        for (int src = g * CHEFS_PER_GUEST; src < (g + 1) * CHEFS_PER_GUEST;
+    for (size_t g = 0; g < NUM_GUESTS; g++) {
+        for (size_t src = g * CHEFS_PER_GUEST; src < (g + 1) * CHEFS_PER_GUEST;
              src++) {
-            for (int dst = src; dst < (g + 1) * CHEFS_PER_GUEST; dst++) {
+            for (size_t dst = src; dst < (g + 1) * CHEFS_PER_GUEST; dst++) {
                 if (tagOfCompanyBuff[src]->intersectsWith(
                         *chefs[dst].tagForCompanyBuff) ||
                     dst == src) {
@@ -27,13 +27,13 @@ void mergeSkills(Skill *skillsResult, const Skill *selfSkills,
                 }
             }
         }
-        for (int i = g * CHEFS_PER_GUEST + 1; i < (g + 1) * CHEFS_PER_GUEST;
+        for (size_t i = g * CHEFS_PER_GUEST + 1; i < (g + 1) * CHEFS_PER_GUEST;
              i++) {
             skillsResult[i] += nextBuffs[i - 1];
         }
     }
     // 技法先加减后乘除
-    for (int i = 0; i < NUM_CHEFS; i++) {
+    for (size_t i = 0; i < NUM_CHEFS; i++) {
         CookAbility &b = skillsResult[i].cookAbilityPercentBuff;
         CookAbility &r = skillsResult[i].ability;
         int *rPtr = &r.stirfry;
@@ -57,13 +57,13 @@ inline void applyConditionBuff(const Skill *const cookAbilitySkill,
 const Skill *States::getCookAbilities(FLAG_getCookAbilities flag) {
     // Not related to specific dish
     if (cookAbilitiesValid && (flag == DEFAULT)) {
-        return cookAbilitiesCache;
+        return cookAbilitiesCache.data();
     }
-    Skill selfSkills[NUM_CHEFS];
-    Skill companySkills[NUM_CHEFS];
-    Skill nextSkills[NUM_CHEFS];
-    Tags *tagOfCompanyBuff[NUM_CHEFS];
-    for (int i = 0; i < NUM_CHEFS; i++) {
+    std::vector<Skill> selfSkills(NUM_CHEFS);
+    std::vector<Skill> companySkills(NUM_CHEFS);
+    std::vector<Skill> nextSkills(NUM_CHEFS);
+    std::vector<Tags *> tagOfCompanyBuff(NUM_CHEFS);
+    for (size_t i = 0; i < NUM_CHEFS; i++) {
         selfSkills[i] = *chefs[i].skill;
         companySkills[i] = *chefs[i].companyBuff;
         nextSkills[i] = *chefs[i].nextBuff;
@@ -71,9 +71,10 @@ const Skill *States::getCookAbilities(FLAG_getCookAbilities flag) {
     }
     cookAbilitiesValid = true;
 
-    mergeSkills(cookAbilitiesCache, selfSkills, companySkills, nextSkills,
-                tagOfCompanyBuff, chefs);
-    return cookAbilitiesCache;
+    mergeSkills(cookAbilitiesCache.data(), selfSkills.data(),
+                companySkills.data(), nextSkills.data(),
+                tagOfCompanyBuff.data(), chefs.data());
+    return cookAbilitiesCache.data();
 }
 
 void States::getSkills(Skill *skills, FLAG_getCookAbilities flag) {
@@ -95,26 +96,26 @@ void States::getSkills(Skill *skills, FLAG_getCookAbilities flag) {
     Skill companySkills[NUM_CHEFS];
     Skill nextSkills[NUM_CHEFS];
     Tags *tagOfCompanyBuff[NUM_CHEFS];
-    for (int i = 0; i < NUM_CHEFS; i++) {
+    for (size_t i = 0; i < NUM_CHEFS; i++) {
         selfSkills[i] = *chefs[i].skill;
         companySkills[i] = *chefs[i].companyBuff;
         nextSkills[i] = *chefs[i].nextBuff;
         tagOfCompanyBuff[i] = &chefs[i].companyBuff->chefTagsForPARTIAL;
     }
     auto skillsPreview = getCookAbilities(flag);
-    for (int i = 0; i < NUM_CHEFS; i++) {
+    for (size_t i = 0; i < NUM_CHEFS; i++) {
         applyConditionBuff(skillsPreview + i,
                            chefs[i].skill->conditionalEffects, selfSkills + i,
-                           recipe + i * DISH_PER_CHEF);
-        applyConditionBuff(skillsPreview + i,
-                           chefs[i].companyBuff->conditionalEffects,
-                           companySkills + i, recipe + i * DISH_PER_CHEF);
+                           recipe.data() + i * DISH_PER_CHEF);
+        applyConditionBuff(
+            skillsPreview + i, chefs[i].companyBuff->conditionalEffects,
+            companySkills + i, recipe.data() + i * DISH_PER_CHEF);
         applyConditionBuff(skillsPreview + i,
                            chefs[i].nextBuff->conditionalEffects,
-                           nextSkills + i, recipe + i * DISH_PER_CHEF);
+                           nextSkills + i, recipe.data() + i * DISH_PER_CHEF);
     }
     mergeSkills(skills, selfSkills, companySkills, nextSkills, tagOfCompanyBuff,
-                chefs);
+                chefs.data());
 
 #ifdef MEASURE_TIME
     clock_gettime(CLOCK_MONOTONIC, &end);

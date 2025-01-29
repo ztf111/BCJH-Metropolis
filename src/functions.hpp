@@ -24,6 +24,14 @@ template <typename T> bool inArray(T **array, int size, T *value) {
     }
     return false;
 }
+template <typename T> bool inArray(std::vector<T *> array, int size, T *value) {
+    for (int i = 0; i < size; i++) {
+        if (array[i] == value) {
+            return true;
+        }
+    }
+    return false;
+}
 
 int sumPrice(const RuleInfo &rl, States s, int log = false);
 void exactChefTool(const RuleInfo &rl, States &s);

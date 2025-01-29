@@ -6,12 +6,14 @@
 #include "include/cereal/types/tuple.hpp"
 
 void StatesSerializer::serialize(std::ostream &stream, States *state) {
-    Chef chefs[NUM_CHEFS];
-    int recipe[DISH_PER_CHEF * NUM_CHEFS];
-    for (int i = 0; i < NUM_CHEFS; i++) {
+    // Chef chefs[NUM_CHEFS];
+    // int recipe[DISH_PER_CHEF * NUM_CHEFS];
+    std::vector<Chef> chefs(NUM_CHEFS);
+    std::vector<int> recipe(DISH_PER_CHEF * NUM_CHEFS);
+    for (size_t i = 0; i < NUM_CHEFS; i++) {
         chefs[i] = state->getChef(i);
     }
-    for (int i = 0; i < NUM_CHEFS * DISH_PER_CHEF; i++) {
+    for (size_t i = 0; i < NUM_CHEFS * DISH_PER_CHEF; i++) {
         recipe[i] = state->recipe[i] == NULL ? -1 : state->recipe[i]->id;
     }
     std::stringstream oss;
@@ -24,17 +26,17 @@ void StatesSerializer::serialize(std::ostream &stream, States *state) {
 
 States *StatesSerializer::deserialize(std::istream &stream) {
     States *state = new States();
-    Chef chefs[NUM_CHEFS];
-    int recipe[DISH_PER_CHEF * NUM_CHEFS];
+    std::vector<Chef> chefs(NUM_CHEFS);
+    std::vector<int> recipe(DISH_PER_CHEF * NUM_CHEFS);
     std::stringstream iss;
     decompress(stream, iss);
     cereal::PortableBinaryInputArchive archive(iss);
     archive(chefs, recipe);
 
-    for (int i = 0; i < NUM_CHEFS; i++) {
+    for (size_t i = 0; i < NUM_CHEFS; i++) {
         state->setChef(i, chefs[i]);
     }
-    for (int i = 0; i < NUM_CHEFS * DISH_PER_CHEF; i++) {
+    for (size_t i = 0; i < NUM_CHEFS * DISH_PER_CHEF; i++) {
         if (recipe[i] != -1) {
             state->recipe[i] = rl->byId(recipe[i]);
         }
@@ -104,8 +106,8 @@ StatesRecorderFile::StatesRecorderFile(std::string filename, std::size_t id,
         std::string encoded_id;
         std::getline(inputFile, encoded_id);
         std::string decoded_id = base64_decode(encoded_id);
-        std::size_t file_id =
-            *reinterpret_cast<const std::size_t *>(decoded_id.data());
+        // std::size_t file_id =
+        //     *reinterpret_cast<const std::size_t *>(decoded_id.data());
         // if (file_id == id) {
         std::istringstream inputStream(
             std::string((std::istreambuf_iterator<char>(inputFile)),

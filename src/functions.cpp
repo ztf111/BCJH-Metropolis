@@ -32,9 +32,9 @@ template <typename Key, typename Storage> class Comparator {
 
 void exactChefTool(const RuleInfo &rl, States &s) {
 #ifndef DEBUG_INTEGRITY
-    for (int i = 0; i < NUM_CHEFS; i++) {
+    for (int i = 0; i < (int)NUM_CHEFS; i++) {
         Tool tool = s.getTool(i);
-        
+
         Comparator<int, States> c;
         for (int toolValue : {100, 60, 30, 0}) {
             States s_new(s);
@@ -44,7 +44,6 @@ void exactChefTool(const RuleInfo &rl, States &s) {
         }
         auto [toolValue, bestState] = c.getBest();
         s = bestState;
-        
     }
     s.getCookAbilities(States::FORCE_UPDATE);
 #endif
@@ -68,7 +67,7 @@ int sumPrice(const RuleInfo &rl, States s, int log) {
     int ans = 0;
     int dishStart = 0;
     int chefStart = 0;
-    for (int g = 0; g < NUM_GUESTS; g++) {
+    for (size_t g = 0; g < NUM_GUESTS; g++) {
         dishStart = DISH_PER_CHEF * CHEFS_PER_GUEST * g;
         chefStart = CHEFS_PER_GUEST * g;
         totalScore = 0;
@@ -164,7 +163,7 @@ double f::one_over_n(int stepMax, int step, double tMax, double tMin) {
 }
 
 States perfectTool(const RuleInfo &rl, States s) {
-    for (int i = 0; i < NUM_CHEFS; i++) {
+    for (size_t i = 0; i < NUM_CHEFS; i++) {
         if (!s.allowsTool(i))
             continue;
         s.modifyTool(i, NOT_EQUIPPED);
@@ -187,7 +186,7 @@ States perfectChef(const RuleInfo &rl, States s, CList *c) {
     States newS = s;
     States bestS = s;
     int bestSscore = sumPrice(rl, bestS);
-    for (int i = 0; i < NUM_CHEFS; i++) {
+    for (size_t i = 0; i < NUM_CHEFS; i++) {
         for (auto chef : *c) {
             if (newS.repeatedChef(&chef, i)) {
                 continue;

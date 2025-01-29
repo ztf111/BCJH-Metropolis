@@ -48,7 +48,7 @@ States SARunner::generateStates(States *initState, const CList *chefList) {
         allChefsId.insert(chefList->at(i).id);
     }
 
-    for (int j = 0; j < NUM_CHEFS; j++) {
+    for (size_t j = 0; j < NUM_CHEFS; j++) {
         if (initState != NULL &&
             allChefsId.contains(initState->getChefPtr(j)->id) &&
             !s.repeatedChef(initState->getChefPtr(j), j, j)) {
@@ -81,7 +81,7 @@ States SARunner::generateStates(States *initState, const CList *chefList) {
         allRecipesId.insert(recipeList->at(i).id);
     }
 
-    for (int j = 0; j < NUM_CHEFS; j++) {
+    for (size_t j = 0; j < NUM_CHEFS; j++) {
         auto &skill = s.getCookAbilities()[j];
         for (int i = 0; i < DISH_PER_CHEF; i++) {
             if (initState != NULL &&
@@ -242,7 +242,7 @@ States SARunner::run(States *s0,
 
 void SARunner::print(States s, bool verbose) const {
     int r = 0;
-    for (int i = 0; i < NUM_CHEFS; i++) {
+    for (size_t i = 0; i < NUM_CHEFS; i++) {
 
         std::cout << "Chef: " << s.getChefPtr(i)->getName() << std::endl
                   << "Recipe ";

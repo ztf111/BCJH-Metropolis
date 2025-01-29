@@ -19,6 +19,8 @@
 #include "utils/ProgressBar.hpp"
 #include "run.hpp"
 
+size_t NUM_GUESTS; 
+
 const int targetScore = TARGET_SCORE_APPROXIMATE;
 const int T_MAX_CHEF = T_MAX_CHEF_orig;
 const int T_MAX_RECIPE = T_MAX_RECIPE_orig;
@@ -95,7 +97,13 @@ int main(int argc, char *argv[]) {
     }
     testJsonUpdate(gameData, usrData);
     RuleInfo rl;
-    loadFirstBanquetRule(rl, ruleData, true);
+    int num_guests = loadFirstBanquetRule(rl, ruleData, true);
+    if (num_guests == -1) {
+        std::cout << "读取规则失败。" << std::endl;
+        exit(1);
+    } else {
+        NUM_GUESTS = num_guests;
+    }
     auto [recipeList, chefList] = loadJson(gameData, usrData);
 
     clock_t start, end;

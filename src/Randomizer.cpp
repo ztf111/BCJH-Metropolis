@@ -68,7 +68,7 @@ bool ChefRandomizer::randomChef(States &s) const {
         if ((skill.ability / s.recipe[i]->cookAbility == 0) ||
             inArray(s.recipe, NUM_CHEFS * DISH_PER_CHEF, s.recipe[i])) {
             bool thisChanged = this->unrepeatedRandomRecipe(
-                skill, s.recipe, totalDishNum, i,
+                skill, s.recipe.data(), totalDishNum, i,
                 RANDOM_SEARCH_TIMEOUT * RANDOM_SEARCH_TIMEOUT);
             changed = changed && thisChanged;
         }
@@ -121,7 +121,7 @@ bool RecipeRandomizer::randomRecipe(States &s) const {
         int recipeNum = rand() % (NUM_CHEFS * DISH_PER_CHEF);
         const Skill &skill = s.getCookAbilities()[recipeNum / DISH_PER_CHEF];
         bool changed = this->unrepeatedRandomRecipe(
-            skill, s.recipe, NUM_CHEFS * DISH_PER_CHEF, recipeNum);
+            skill, s.recipe.data(), NUM_CHEFS * DISH_PER_CHEF, recipeNum);
         if (changed) {
             return true;
         }
@@ -147,7 +147,7 @@ bool ChefRandomizer::swapChefTool(States &s) const {
              i < chefNum * DISH_PER_CHEF + DISH_PER_CHEF; i++) {
             if (ability / s.recipe[i]->cookAbility == 0) {
                 bool thisChanged = this->unrepeatedRandomRecipe(
-                    skill, s.recipe, NUM_CHEFS * DISH_PER_CHEF, i);
+                    skill, s.recipe.data(), NUM_CHEFS * DISH_PER_CHEF, i);
                 if (!thisChanged) {
                     break;
                 }
