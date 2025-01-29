@@ -69,16 +69,13 @@ if (CMAKE_SYSTEM_NAME MATCHES "Emscripten")
     # set multithread make
     set(CMAKE_MAKE_PROGRAM "${CMAKE_MAKE_PROGRAM} -j$(nproc)")
     
-    foreach(i 2 )
-        set(target_name ${PJNAME}_${i})
-        add_executable(${target_name} ${src_EMSCRIPTEN})
-        target_compile_definitions(${target_name} PRIVATE -DNUM_GUESTS=${i})
-        set_target_properties(${target_name} PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/data/data.min.json)
-        set_target_properties(${target_name} PROPERTIES LINK_FLAGS "--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/data/data.min.json@./data.min.json -lembind -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=run -sSTACK_SIZE=512kb") #512k for zpaq
-        # Add -O0 and -fexceptions to LINK_FLAGS when -DCMAKE_BUILD_TYPE=Debug; ow. -O3
-        set_target_properties(${target_name} PROPERTIES LINK_FLAGS_DEBUG "-O0 -fexceptions -fwasm-exceptions")
-        set_target_properties(${target_name} PROPERTIES LINK_FLAGS_RELEASE "-O3")
-    endforeach()
+    set(target_name ${PJNAME})
+    add_executable(${target_name} ${src_EMSCRIPTEN})
+    set_target_properties(${target_name} PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/data/data.min.json)
+    set_target_properties(${target_name} PROPERTIES LINK_FLAGS "--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/data/data.min.json@./data.min.json -lembind -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=run -sSTACK_SIZE=512kb") #512k for zpaq
+    # Add -O0 and -fexceptions to LINK_FLAGS when -DCMAKE_BUILD_TYPE=Debug; ow. -O3
+    set_target_properties(${target_name} PROPERTIES LINK_FLAGS_DEBUG "-O0 -fexceptions -fwasm-exceptions")
+    set_target_properties(${target_name} PROPERTIES LINK_FLAGS_RELEASE "-O3")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
     add_executable(${PJNAME} ${src_WINDOWS})
 else()
