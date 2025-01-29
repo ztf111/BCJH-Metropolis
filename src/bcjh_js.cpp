@@ -44,13 +44,18 @@ std::pair<Json::Value, Json::Value> loadJson(std::stringstream &userDataSs) {
     if (!gameDataF.good()) {
         gameDataF =
             std::ifstream("../data/data.min.json", std::ifstream::binary);
-        if (!gameDataF.good())
-            throw FileNotExistException();
+        if (!gameDataF.good()) {
+            gameDataF = std::ifstream("../../data/data.min.json",
+                                      std::ifstream::binary);
+            if (!gameDataF.good())
+                throw FileNotExistException();
+        }
     }
     gameDataF >> gameData;
     gameDataF.close();
 
     userDataSs >> userData;
+    userData["type"] = "bcjh";
 
     return {std::move(gameData), std::move(userData)};
 }
@@ -83,9 +88,8 @@ std::string
     Json::Value ruleDataJson;
     ruleDataSs >> ruleDataJson;
 
-    RuleInfo rl;
     std::cout << "正在读取..." << std::endl;
-    int num_guests = loadBanquetRuleFromInput(rl, ruleDataJson, true);
+    auto [num_guests, rl] = loadBanquetRuleFromInput(ruleDataJson, true);
     if (num_guests == -1) {
         std::cout << "读取规则失败。" << std::endl;
         exit(1);

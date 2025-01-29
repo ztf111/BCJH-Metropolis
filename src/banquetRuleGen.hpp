@@ -6,6 +6,7 @@
 #include <cassert>
 #include "utils/json.hpp"
 #include "States.hpp"
+#include <memory>
 extern double generateBanquetRuleTime;
 class Effect {
   public:
@@ -18,11 +19,11 @@ class Effect {
 };
 class Rule {
   public:
-    Effect *effect;
-    Rule(Effect *effect) : effect(effect) {}
+    std::shared_ptr<Effect> effect;
+    Rule(std::shared_ptr<Effect> effect) : effect(effect) {}
     virtual void operator()(BanquetRuleTogether *brt, States &s,
                             int overrideDishStart = -1) const = 0;
-    virtual ~Rule() { delete effect; }
+    virtual ~Rule() = default;
 };
 
 class Condition {
@@ -174,8 +175,9 @@ class IntentAddEffect : public Effect {
 };
 class NextRuleEffect : public Effect {
   public:
-    Rule *rule;
-    NextRuleEffect(Rule *rule, bool strict = false) : rule(rule) {
+    std::shared_ptr<Rule> rule;
+    NextRuleEffect(std::shared_ptr<Rule> rule, bool strict = false)
+        : rule(rule) {
         rule->effect->strict = strict;
     }
     void operator()(BanquetRuleTogether *brt, int i, States &s) const override {
@@ -183,13 +185,13 @@ class NextRuleEffect : public Effect {
             (*rule)(brt, s, i + 1);
         }
     }
-    ~NextRuleEffect() override { delete rule; }
 };
 class CreatePhaseRulesEffect : public Effect {
   public:
-    Rule *rule;
+    std::shared_ptr<Rule> rule;
     int len;
-    CreatePhaseRulesEffect(Rule *rule, int len, bool strict = false)
+    CreatePhaseRulesEffect(std::shared_ptr<Rule> rule, int len,
+                           bool strict = false)
         : rule(rule), len(len) {
         for (int i = 0; i < len; i++)
             rule->effect->strict = strict;
@@ -201,7 +203,6 @@ class CreatePhaseRulesEffect : public Effect {
             (*rule)(brt, s, i + j);
         }
     }
-    ~CreatePhaseRulesEffect() override { delete rule; }
 };
 class FullAddEffect : public Effect {
   public:
@@ -275,8 +276,9 @@ class NoEffect : public Effect {
 
 class SingleConditionRule : public Rule {
   public:
-    Condition *condition;
-    SingleConditionRule(Condition *condition, Effect *effect)
+    std::shared_ptr<Condition> condition;
+    SingleConditionRule(std::shared_ptr<Condition> condition,
+                        std::shared_ptr<Effect> effect)
         : Rule(effect), condition(condition) {}
     void operator()(BanquetRuleTogether *brt, States &s,
                     int overrideDishStart = -1) const override {
@@ -286,18 +288,11 @@ class SingleConditionRule : public Rule {
             (*effect)(brt, recipe, s);
         }
     }
-    ~SingleConditionRule() override { delete condition; }
 };
 struct RuleInfo {
-    std::vector<Rule *> rl;
+    std::vector<std::shared_ptr<Rule>> rl;
     // int bestFull[NUM_GUESTS];
     std::vector<int> bestFull;
-    RuleInfo() : bestFull(NUM_GUESTS, 0) {}
-    ~RuleInfo() {
-        for (auto &r : rl) {
-            delete r;
-        }
-    }
 };
 void banquetRuleGenerated(BanquetRuleTogether *rule, States &s,
                           const RuleInfo &allRules);
@@ -308,8 +303,8 @@ void banquetRuleGenerated(BanquetRuleTogether *rule, States &s,
  *
  * @param ruleID If -1, use the first rule in the json file.
  */
-int loadFirstBanquetRule(RuleInfo &, const Json::Value &gameData,
-                         bool print = false);
-int loadBanquetRuleFromInput(RuleInfo &, const Json::Value &ruleData,
-                             bool print = false);
+std::tuple<int, RuleInfo> loadFirstBanquetRule(const Json::Value &gameData,
+                                               bool print = false);
+std::tuple<int, RuleInfo> loadBanquetRuleFromInput(const Json::Value &ruleData,
+                                                   bool print = false);
 #endif

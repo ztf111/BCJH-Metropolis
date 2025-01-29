@@ -92,12 +92,11 @@ int main(int argc, char *argv[]) {
         loadJsonFiles();
     if (directUserData.size() != 0) {
         usrData = directUserData;
-        std::cout << GREEN << "读取到游戏中直接导出的数据，不使用白采菊花数据。"
+        std::cout << GREEN << "读取到游戏中直接导出的数据，不使用白菜菊花数据。"
                   << NO_FORMAT << std::endl;
     }
     testJsonUpdate(gameData, usrData);
-    RuleInfo rl;
-    int num_guests = loadFirstBanquetRule(rl, ruleData, true);
+    auto [num_guests,rl] = loadFirstBanquetRule( ruleData, true);
     if (num_guests == -1) {
         std::cout << "读取规则失败。" << std::endl;
         exit(1);

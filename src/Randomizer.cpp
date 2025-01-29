@@ -233,7 +233,7 @@ bool Randomizer::unrepeatedRandomRecipe(const Skill &skill, Recipe **recipes,
                                         int size, int index,
                                         int repeats) const {
     int count = 0;
-    Recipe *r;
+    Recipe *r = NULL;
     auto &rl = this->r;
     float p_sameRarity = 0.4;
     do {
@@ -242,8 +242,9 @@ bool Randomizer::unrepeatedRandomRecipe(const Skill &skill, Recipe **recipes,
             if (rarityRecipeMap.at(rarity).size() == 1) {
                 p_sameRarity = 0;
             } else {
-                r = &rl->at(rarityRecipeMap.at(
-                    rarity)[rand() % rarityRecipeMap.at(rarity).size()]);
+                int radomRecipeId = rarityRecipeMap.at(
+                    rarity)[rand() % rarityRecipeMap.at(rarity).size()];
+                r = rl->byId(radomRecipeId);
             }
         } else {
             r = &rl->at(rand() % rl->size());

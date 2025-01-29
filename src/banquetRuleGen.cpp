@@ -2,6 +2,7 @@
 #include "utils/json.hpp"
 #include "functions.hpp"
 #include <cassert>
+#include <memory>
 double randomRecipeTime = 0;
 double randomChefTime = 0;
 double banquetRuleTime = 0;
@@ -42,18 +43,20 @@ const Json::Value &getIntentBuffById(const GDMap &GD, int Id) {
 //     }
 //     throw std::runtime_error("Buff not found " + std::to_string(intentId));
 // }
-Rule *getRuleFromJson(const Json::Value &intent, int d, const GDMap &allIntents,
-                      const GDMap &allBuffs,
-                      int remainingDishes = DISH_PER_CHEF);
+std::shared_ptr<Rule> getRuleFromJson(const Json::Value &intent, int d,
+                                      const GDMap &allIntents,
+                                      const GDMap &allBuffs,
+                                      int remainingDishes = DISH_PER_CHEF);
 
-int loadBanquetRuleFromJson(RuleInfo &ruleInfo, const Json::Value &rulesTarget,
-                            const GDMap &allBuffs, const GDMap &allIntents) {
+std::tuple<int, RuleInfo>
+loadBanquetRuleFromJson(const Json::Value &rulesTarget, const GDMap &allBuffs,
+                        const GDMap &allIntents) {
     int d = 0;
     int num_guest = 0;
+    RuleInfo ruleInfo;
     for (auto &guest : rulesTarget) {
         num_guest++;
-        ruleInfo.bestFull[d / DISH_PER_CHEF / CHEFS_PER_GUEST] =
-            guest["Satiety"].asInt();
+        ruleInfo.bestFull.push_back(guest["Satiety"].asInt());
         auto &intents = guest["IntentList"];
         for (auto &phaseIntents : intents) {
             if (guest.isMember("GlobalBuffList")) {
@@ -75,14 +78,14 @@ int loadBanquetRuleFromJson(RuleInfo &ruleInfo, const Json::Value &rulesTarget,
             d += DISH_PER_CHEF;
         }
     }
-    return num_guest;
+    return {num_guest, std::move(ruleInfo)};
 }
 
 /**
  * @todo Error handling.
  */
-int loadFirstBanquetRule(RuleInfo &ruleInfo, const Json::Value &gameData,
-                         bool print) {
+std::tuple<int, RuleInfo> loadFirstBanquetRule(const Json::Value &gameData,
+                                               bool print) {
     auto &buffsGD = gameData["buffs"];
     auto &intentsGD = gameData["intents"];
     auto &rulesGD = gameData["rules"];
@@ -107,20 +110,20 @@ int loadFirstBanquetRule(RuleInfo &ruleInfo, const Json::Value &gameData,
         ruleGD.isMember("Group") ? ruleGD["Group"] : ruleGD["group"];
     if (rulesTarget.size() == 0) {
         std::cout << "规则为空。" << std::endl;
-        return -1;
+        throw std::runtime_error("规则为空。");
     }
-    return loadBanquetRuleFromJson(ruleInfo, rulesTarget, buffsMap, intentsMap);
+    return loadBanquetRuleFromJson(rulesTarget, buffsMap, intentsMap);
 }
 
-int loadBanquetRuleFromInput(RuleInfo &ruleInfo, const Json::Value &ruleData,
-                             bool print) {
+std::tuple<int, RuleInfo> loadBanquetRuleFromInput(const Json::Value &ruleData,
+                                                   bool print) {
     if (print)
         std::cout << "规则: " << ruleData["title"].asString() << std::endl;
     auto &rulesTarget =
         ruleData.isMember("Group") ? ruleData["Group"] : ruleData["group"];
     if (rulesTarget.size() == 0) {
         std::cout << "规则为空。" << std::endl;
-        return false;
+        throw std::runtime_error("规则为空。");
     }
     auto &buffs = ruleData["buffs"];
     auto &intents = ruleData["intents"];
@@ -132,12 +135,13 @@ int loadBanquetRuleFromInput(RuleInfo &ruleInfo, const Json::Value &ruleData,
     for (auto &intent : intents) {
         intentsMap[intent["intentId"].asInt()] = intent;
     }
-    return loadBanquetRuleFromJson(ruleInfo, rulesTarget, buffsMap, intentsMap);
+    return loadBanquetRuleFromJson(rulesTarget, buffsMap, intentsMap);
 }
-Rule *getRuleFromJson(const Json::Value &intent, int dish,
-                      const GDMap &allIntents, const GDMap &allBuffs,
-                      int remainingDishes) {
-    Condition *c;
+std::shared_ptr<Rule> getRuleFromJson(const Json::Value &intent, int dish,
+                                      const GDMap &allIntents,
+                                      const GDMap &allBuffs,
+                                      int remainingDishes) {
+    std::shared_ptr<Condition> c;
     auto effectType = intent["effectType"].asString();
     auto effectValue = intent["effectValue"].asInt();
     std::string conditionType;
@@ -147,20 +151,24 @@ Rule *getRuleFromJson(const Json::Value &intent, int dish,
         conditionType = intent["conditionType"].asString();
         conditionValue = intent["conditionValue"].asString();
         if (conditionType == "CookSkill") {
-            c = new SkillCondition(dish, conditionValue, remainingDishes);
+            c = std::make_shared<SkillCondition>(dish, conditionValue,
+                                                 remainingDishes);
         } else if (conditionType == "CondimentSkill") {
-            c = new FlavorCondition(dish, conditionValue, remainingDishes);
+            c = std::make_shared<FlavorCondition>(dish, conditionValue,
+                                                  remainingDishes);
         } else if (conditionType == "Order") {
-            c = new OrderCondition(dish, getInt(intent["conditionValue"]));
+            c = std::make_shared<OrderCondition>(
+                dish, getInt(intent["conditionValue"]));
         } else if (conditionType == "Rarity") {
-            c = new RarityCondition(dish, getInt(intent["conditionValue"]),
-                                    remainingDishes);
+            c = std::make_shared<RarityCondition>(
+                dish, getInt(intent["conditionValue"]), remainingDishes);
         } else if (conditionType == "Group") {
             assert(effectType == "CreateBuff");
-            c = new GroupCondition(dish, conditionValue, remainingDishes);
+            c = std::make_shared<GroupCondition>(dish, conditionValue,
+                                                 remainingDishes);
         } else if (conditionType == "Rank") {
-            c = new RankCondition(dish, getInt(intent["conditionValue"]),
-                                  remainingDishes);
+            c = std::make_shared<RankCondition>(
+                dish, getInt(intent["conditionValue"]), remainingDishes);
         } else {
             std::cout << "Unknown condition type: " << conditionType
                       << std::endl;
@@ -168,41 +176,40 @@ Rule *getRuleFromJson(const Json::Value &intent, int dish,
                                      conditionType);
         }
     } else {
-        c = new AlwaysTrueCondition(dish);
+        c = std::make_shared<AlwaysTrueCondition>(dish);
     }
 
-    Effect *e;
+    std::shared_ptr<Effect> e;
     if (effectType == "BasicPriceChange") {
-        e = new BasePriceAddEffect(effectValue);
+        e = std::make_shared<BasePriceAddEffect>(effectValue);
     } else if (effectType == "BasicPriceChangePercent") {
-        e = new BasePricePercentEffect(effectValue);
+        e = std::make_shared<BasePricePercentEffect>(effectValue);
     } else if (effectType == "PriceChangePercent") {
-        e = new PricePercentEffect(effectValue);
+        e = std::make_shared<PricePercentEffect>(effectValue);
     } else if (effectType == "SatietyChange") {
-        e = new FullAddEffect(effectValue);
+        e = std::make_shared<FullAddEffect>(effectValue);
     } else if (effectType == "SetSatietyValue") {
-        e = new FullSetEffect(effectValue);
+        e = std::make_shared<FullSetEffect>(effectValue);
     } else if (effectType == "IntentAdd") {
-        e = new IntentAddEffect();
+        e = std::make_shared<IntentAddEffect>();
     } else if (effectType == "CreateIntent") {
         auto newIntent = getIntentBuffById(allIntents, effectValue);
         auto newRule =
             getRuleFromJson(newIntent, dish + 1, allIntents, allBuffs, 1);
-        e = new NextRuleEffect(newRule);
+        e = std::make_shared<NextRuleEffect>(newRule);
 
     } else if (effectType == "CreateBuff") {
-        // 下（两）阶段blahblah
         auto newIntent = getIntentBuffById(allBuffs, effectValue);
         int lastRounds = getInt(newIntent["lastRounds"]);
         auto newRule = getRuleFromJson(newIntent, dish + DISH_PER_CHEF,
                                        allIntents, allBuffs, 1);
-        e = new CreatePhaseRulesEffect(newRule, DISH_PER_CHEF * lastRounds,
-                                       true);
+        e = std::make_shared<CreatePhaseRulesEffect>(
+            newRule, DISH_PER_CHEF * lastRounds, true);
     } else {
         std::cout << "Unknown effect type: " << effectType << std::endl;
         throw std::runtime_error("Unknown effect type: " + effectType);
     }
-    return new SingleConditionRule(c, e);
+    return std::make_shared<SingleConditionRule>(c, e);
 }
 void banquetRuleGenerated(BanquetRuleTogether *brt, States &s,
                           const RuleInfo &allRules) {
