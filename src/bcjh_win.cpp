@@ -85,6 +85,9 @@ parseArgs(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
+#ifdef _DEBUG
+    std::cout << "Debug mode" << std::endl;
+#endif
     auto [silent, log, mp, seed, iterChef, iterRecipe, recover_str] =
         parseArgs(argc, argv);
     SARunner::init(T_MAX_CHEF, T_MAX_RECIPE, iterChef, iterRecipe, targetScore);

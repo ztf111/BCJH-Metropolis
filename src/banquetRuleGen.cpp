@@ -65,8 +65,15 @@ loadBanquetRuleFromJson(const Json::Value &rulesTarget, const GDMap &allBuffs,
                 for (auto &buffId : globalBuffs) {
                     auto &buffContent =
                         getIntentBuffById(allBuffs, buffId.asInt());
-                    ruleInfo.rl.push_back(
-                        getRuleFromJson(buffContent, d, allIntents, allBuffs));
+
+                    auto singleRule = getRuleFromJson(buffContent, d,
+                                                      allIntents, allBuffs, 1);
+                    auto e = std::make_shared<CreatePhaseRulesEffect>(
+                        singleRule, DISH_PER_CHEF, true, false);
+                    auto rule = std::make_shared<SingleConditionRule>(
+                        std::make_shared<AlwaysTrueCondition>(d), e,
+                        buffContent["desc"].asString());
+                    ruleInfo.rl.push_back(rule);
                 }
             }
             for (auto &intent : phaseIntents) {
@@ -100,14 +107,21 @@ std::tuple<int, RuleInfo> loadFirstBanquetRule(const Json::Value &gameData,
     // find the rule in rulesGD with Id ruleID
     Json::Value ruleGD = rulesGD[0];
     if (print) {
-        auto ruleName = ruleGD["title"].asString();
+        auto ruleName = ruleGD.isMember("Title") ? ruleGD["Title"].asString()
+                                                 : ruleGD["title"].asString();
         std::cout << "请核对规则：" << UNDERLINE << ruleName << NO_FORMAT
                   << "。若规则还是上周的，说明还没有更新，请过段时间再运行。"
                   << std::endl;
     }
-
-    auto &rulesTarget =
-        ruleGD.isMember("Group") ? ruleGD["Group"] : ruleGD["group"];
+    Json::Value rulesTarget;
+    if (ruleGD.isMember("Group")) {
+        rulesTarget = ruleGD["Group"];
+    } else if (ruleGD.isMember("group")) {
+        rulesTarget = ruleGD["group"];
+    } else {
+        rulesTarget = Json::Value(Json::arrayValue);
+        rulesTarget.append(ruleGD);
+    }
     if (rulesTarget.size() == 0) {
         std::cout << "规则为空。" << std::endl;
         throw std::runtime_error("规则为空。");
@@ -119,8 +133,15 @@ std::tuple<int, RuleInfo> loadBanquetRuleFromInput(const Json::Value &ruleData,
                                                    bool print) {
     if (print)
         std::cout << "规则: " << ruleData["title"].asString() << std::endl;
-    auto &rulesTarget =
-        ruleData.isMember("Group") ? ruleData["Group"] : ruleData["group"];
+    Json::Value rulesTarget;
+    if (ruleData.isMember("Group")) {
+        rulesTarget = ruleData["Group"];
+    } else if (ruleData.isMember("group")) {
+        rulesTarget = ruleData["group"];
+    } else {
+        rulesTarget = Json::Value(Json::arrayValue);
+        rulesTarget.append(ruleData);
+    }
     if (rulesTarget.size() == 0) {
         std::cout << "规则为空。" << std::endl;
         throw std::runtime_error("规则为空。");
@@ -209,7 +230,8 @@ std::shared_ptr<Rule> getRuleFromJson(const Json::Value &intent, int dish,
         std::cout << "Unknown effect type: " << effectType << std::endl;
         throw std::runtime_error("Unknown effect type: " + effectType);
     }
-    return std::make_shared<SingleConditionRule>(c, e);
+    return std::make_shared<SingleConditionRule>(c, e,
+                                                 intent["desc"].asString());
 }
 void banquetRuleGenerated(BanquetRuleTogether *brt, States &s,
                           const RuleInfo &allRules) {

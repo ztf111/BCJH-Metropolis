@@ -12,6 +12,13 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         message(FATAL_ERROR "GCC version must be at least 10 to compile c++20!" ${CMAKE_CXX_COMPILER_VERSION})
     endif()
 endif()
+
+# Add debug definitions
+string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
+if(uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+    add_definitions(-D_DEBUG)
+endif()
+
 message(STATUS "operation system is ${CMAKE_SYSTEM_NAME}")
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++20")

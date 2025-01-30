@@ -19,10 +19,21 @@ class Effect {
 };
 class Rule {
   public:
+#ifdef _DEBUG
+    std::string name;
+#endif
     std::shared_ptr<Effect> effect;
-    Rule(std::shared_ptr<Effect> effect) : effect(effect) {}
-    virtual void operator()(BanquetRuleTogether *brt, States &s,
-                            int overrideDishStart = -1) const = 0;
+    Rule(std::shared_ptr<Effect> effect, std::string name)
+#ifdef _DEBUG
+        : effect(effect), name(name){}
+#else
+        : effect(effect) {
+        (void)name; // prevent unused parameter warning
+    }
+#endif
+                          virtual void
+                          operator()(BanquetRuleTogether *brt, States &s,
+                                     int overrideDishStart = -1) const = 0;
     virtual ~Rule() = default;
 };
 
@@ -190,15 +201,20 @@ class CreatePhaseRulesEffect : public Effect {
   public:
     std::shared_ptr<Rule> rule;
     int len;
+    bool starting_from_next_phase;
     CreatePhaseRulesEffect(std::shared_ptr<Rule> rule, int len,
-                           bool strict = false)
-        : rule(rule), len(len) {
-        for (int i = 0; i < len; i++)
-            rule->effect->strict = strict;
+                           bool strict = false,
+                           bool starting_from_next_phase = true)
+        : rule(rule), len(len),
+          starting_from_next_phase(starting_from_next_phase) {
+        rule->effect->strict = strict;
     }
     void operator()(BanquetRuleTogether *brt, int i, States &s) const override {
         // Starting from next phase.
-        i = (i / DISH_PER_CHEF + 1) * DISH_PER_CHEF;
+        i = (i / DISH_PER_CHEF) * DISH_PER_CHEF;
+        if (starting_from_next_phase) {
+            i += DISH_PER_CHEF;
+        }
         for (int j = 0; j < len; j++) {
             (*rule)(brt, s, i + j);
         }
@@ -278,8 +294,8 @@ class SingleConditionRule : public Rule {
   public:
     std::shared_ptr<Condition> condition;
     SingleConditionRule(std::shared_ptr<Condition> condition,
-                        std::shared_ptr<Effect> effect)
-        : Rule(effect), condition(condition) {}
+                        std::shared_ptr<Effect> effect, std::string name)
+        : Rule(effect, name), condition(condition) {}
     void operator()(BanquetRuleTogether *brt, States &s,
                     int overrideDishStart = -1) const override {
         int start = overrideDishStart == -1 ? -1 : overrideDishStart;
