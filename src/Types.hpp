@@ -268,6 +268,7 @@ class Skill {
     DiscretizedBuff rarityBuff;
     DiscretizedBuff rarityBaseBuff;
     DiscretizedBuff gradeBuff; // 几级就填当前那一级，比它高的不用填。
+    DiscretizedBuff gradeBaseBuff; // 几级就填当前那一级，比它高的不用填。
     AmountBuff amountBuff;
     AmountBuff amountBaseBuff;
     DiscretizedBuff amountAdd;

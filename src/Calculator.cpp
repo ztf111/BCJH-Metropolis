@@ -49,8 +49,10 @@ BanquetInfo getPrice(const Skill &skill, Recipe *recipe, BanquetRuleTogether &r,
     default:
         gradebuff = 100;
     }
+    int recipeBaseBuff = 0;
     for (int i = 1; i <= grade; i++) {
         gradebuff += skill.gradeBuff[i];
+        recipeBaseBuff += skill.gradeBaseBuff[i];
     }
     int amount =
         Recipe::dishNum[recipe->rarity] + skill.amountAdd[recipe->rarity];
@@ -63,11 +65,11 @@ BanquetInfo getPrice(const Skill &skill, Recipe *recipe, BanquetRuleTogether &r,
                     recipe->materialCategories * skill.materialBuff +
                     (amount_add + skill.rarityBuff[recipe->rarity]) +
                     (Chef::coinBuffOn ? skill.pricePercentBuff : 0);
-    int recipeBaseBuff = skill.baseAddBuff +
-                         recipe->cookAbility * skill.abilityBaseBuff +
-                         skill.flavorBaseBuff * recipe->flavor +
-                         recipe->materialCategories * skill.materialBaseBuff +
-                         skill.rarityBaseBuff[recipe->rarity];
+    recipeBaseBuff += skill.baseAddBuff +
+                      recipe->cookAbility * skill.abilityBaseBuff +
+                      skill.flavorBaseBuff * recipe->flavor +
+                      recipe->materialCategories * skill.materialBaseBuff +
+                      skill.rarityBaseBuff[recipe->rarity];
     int buff = gradebuff + skillBuff + intentionAddBuff;
     int singlePrice =
         int_ceil((recipe->price + rule.baseRule.directAdd) *
