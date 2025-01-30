@@ -48,16 +48,24 @@ std::shared_ptr<Rule> getRuleFromJson(const Json::Value &intent, int d,
                                       const GDMap &allBuffs,
                                       int remainingDishes = DISH_PER_CHEF);
 
-std::tuple<int, RuleInfo>
+std::tuple<int, int, RuleInfo>
 loadBanquetRuleFromJson(const Json::Value &rulesTarget, const GDMap &allBuffs,
                         const GDMap &allIntents) {
     int d = 0;
     int num_guest = 0;
     RuleInfo ruleInfo;
+    int chefs_per_guest = 0;
     for (auto &guest : rulesTarget) {
         num_guest++;
         ruleInfo.bestFull.push_back(guest["Satiety"].asInt());
         auto &intents = guest["IntentList"];
+        if (chefs_per_guest == 0) {
+            chefs_per_guest = intents.size();
+        } else {
+            if (chefs_per_guest != (int)intents.size()) {
+                throw std::runtime_error("每位客人的厨师数量不一致。");
+            }
+        }
         for (auto &phaseIntents : intents) {
             if (guest.isMember("GlobalBuffList")) {
                 auto &globalBuffs = guest["GlobalBuffList"];
@@ -85,14 +93,14 @@ loadBanquetRuleFromJson(const Json::Value &rulesTarget, const GDMap &allBuffs,
             d += DISH_PER_CHEF;
         }
     }
-    return {num_guest, std::move(ruleInfo)};
+    return {num_guest, chefs_per_guest, std::move(ruleInfo)};
 }
 
 /**
  * @todo Error handling.
  */
-std::tuple<int, RuleInfo> loadFirstBanquetRule(const Json::Value &gameData,
-                                               bool print) {
+std::tuple<int, int, RuleInfo> loadFirstBanquetRule(const Json::Value &gameData,
+                                                    bool print) {
     auto &buffsGD = gameData["buffs"];
     auto &intentsGD = gameData["intents"];
     auto &rulesGD = gameData["rules"];
@@ -129,8 +137,8 @@ std::tuple<int, RuleInfo> loadFirstBanquetRule(const Json::Value &gameData,
     return loadBanquetRuleFromJson(rulesTarget, buffsMap, intentsMap);
 }
 
-std::tuple<int, RuleInfo> loadBanquetRuleFromInput(const Json::Value &ruleData,
-                                                   bool print) {
+std::tuple<int, int, RuleInfo>
+loadBanquetRuleFromInput(const Json::Value &ruleData, bool print) {
     if (print)
         std::cout << "规则: " << ruleData["title"].asString() << std::endl;
     Json::Value rulesTarget;

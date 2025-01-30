@@ -75,7 +75,7 @@ int sumPrice(const RuleInfo &rl, States s, int log) {
         scoreCache = 0;
         fullCache = 0;
 
-        for (int i = 0; i < DISH_PER_CHEF * CHEFS_PER_GUEST; i++) {
+        for (size_t i = 0; i < DISH_PER_CHEF * CHEFS_PER_GUEST; i++) {
             if ((log & VERBOSE) && (i % DISH_PER_CHEF == 0)) {
 #ifdef EMSCRIPTEN
                 std::cout << "🧑‍🍳";

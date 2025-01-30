@@ -1,9 +1,8 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 
-extern size_t NUM_GUESTS;
+extern size_t NUM_GUESTS, CHEFS_PER_GUEST;
 #define DISH_PER_CHEF 3
-#define CHEFS_PER_GUEST 3
 #define NUM_CHEFS (NUM_GUESTS * CHEFS_PER_GUEST)
 #define NUM_DISHES (NUM_CHEFS * DISH_PER_CHEF)
 // #define DEBUG_INTEGRITY

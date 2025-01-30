@@ -32,7 +32,7 @@ extern double getStatesSkillsTime;
 extern double generateBanquetRuleTime, generateBanquetRuleTimeOut;
 extern double calculatePriceTime, calculatePriceTimeOut;
 #endif
-size_t NUM_GUESTS;
+size_t NUM_GUESTS, CHEFS_PER_GUEST;
 
 /**
  * @return  pair<Json::Value gameData, Json::Value userData>
@@ -89,12 +89,14 @@ std::string
     ruleDataSs >> ruleDataJson;
 
     std::cout << "正在读取..." << std::endl;
-    auto [num_guests, rl] = loadBanquetRuleFromInput(ruleDataJson, true);
+    auto [num_guests, chefs_per_guest, rl] =
+        loadBanquetRuleFromInput(ruleDataJson, true);
     if (num_guests == -1) {
         std::cout << "读取规则失败。" << std::endl;
         exit(1);
     } else {
         NUM_GUESTS = num_guests;
+        CHEFS_PER_GUEST = chefs_per_guest;
     }
     auto [gameData, userData] = loadJson(userDataSs);
     auto [recipeList, chefList] = loadJson(gameData, userData, allowTool);

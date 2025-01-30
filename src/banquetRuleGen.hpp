@@ -319,8 +319,8 @@ void banquetRuleGenerated(BanquetRuleTogether *rule, States &s,
  *
  * @param ruleID If -1, use the first rule in the json file.
  */
-std::tuple<int, RuleInfo> loadFirstBanquetRule(const Json::Value &gameData,
-                                               bool print = false);
-std::tuple<int, RuleInfo> loadBanquetRuleFromInput(const Json::Value &ruleData,
-                                                   bool print = false);
+std::tuple<int, int, RuleInfo> loadFirstBanquetRule(const Json::Value &gameData,
+                                                    bool print = false);
+std::tuple<int, int, RuleInfo>
+loadBanquetRuleFromInput(const Json::Value &ruleData, bool print = false);
 #endif
