@@ -92,10 +92,14 @@ void States::getSkills(Skill *skills, FLAG_getCookAbilities flag) {
         return;
     }
     // Skills needs to be copied to test conditional effects
-    Skill selfSkills[NUM_CHEFS];
-    Skill companySkills[NUM_CHEFS];
-    Skill nextSkills[NUM_CHEFS];
-    Tags *tagOfCompanyBuff[NUM_CHEFS];
+    std::vector<Skill> selfSkillsVector(NUM_CHEFS);
+    std::vector<Skill> companySkillsVector(NUM_CHEFS);
+    std::vector<Skill> nextSkillsVector(NUM_CHEFS);
+    std::vector<Tags *> tagOfCompanyBuffVector(NUM_CHEFS);
+    Skill *selfSkills = selfSkillsVector.data();
+    Skill *companySkills = companySkillsVector.data();
+    Skill *nextSkills = nextSkillsVector.data();
+    Tags **tagOfCompanyBuff = tagOfCompanyBuffVector.data();
     for (size_t i = 0; i < NUM_CHEFS; i++) {
         selfSkills[i] = *chefs[i].skill;
         companySkills[i] = *chefs[i].companyBuff;

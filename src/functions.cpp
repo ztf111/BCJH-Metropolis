@@ -50,11 +50,10 @@ void exactChefTool(const RuleInfo &rl, States &s) {
 }
 
 int sumPrice(const RuleInfo &rl, States s, int log) {
-
-    BanquetRuleTogether rule[NUM_CHEFS * DISH_PER_CHEF];
-    Skill skills[NUM_CHEFS];
-    s.getSkills(skills);
-    banquetRuleGenerated(rule, s, rl);
+    std::vector<BanquetRuleTogether> rule(NUM_CHEFS * DISH_PER_CHEF);
+    std::vector<Skill> skills(NUM_CHEFS);
+    s.getSkills(skills.data());
+    banquetRuleGenerated(rule.data(), s, rl);
 #ifdef MEASURE_TIME
     struct timespec start, finish;
     clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
