@@ -94,11 +94,9 @@ std::tuple<RList, CList> _loadJsonInGame(const Json::Value &gameData,
     return {std::move(recipeList), std::move(chefList)};
 }
 std::tuple<RList, CList> _loadJsonBCJH(const Json::Value &gameData,
-                                       const Json::Value &userData
-#ifndef _WIN32
-                                       ,
+                                       const Json::Value &userData,
                                        bool allowTool
-#endif
+
 ) {
     RList recipeList;
     CList chefList;
@@ -107,20 +105,11 @@ std::tuple<RList, CList> _loadJsonBCJH(const Json::Value &gameData,
     try {
         Skill::loadJson(gameData["skills"]);
         Chef::initBuff(userData["userUltimate"]);
-        Chef::loadAppendChef(chefList, 5, gameData, userData
-#ifndef _WIN32
-                             ,
-                             allowTool
-#endif
-        );
+        Chef::loadAppendChef(chefList, 5, gameData, userData, allowTool);
         int chefRarity = 4;
         do {
-            Chef::loadAppendChef(chefList, chefRarity, gameData, userData
-#ifndef _WIN32
-                                 ,
-                                 allowTool
-#endif
-            );
+            Chef::loadAppendChef(chefList, chefRarity, gameData, userData,
+                                 allowTool);
             chefRarity--;
         } while (chefList.size() <= NUM_CHEFS && chefRarity >= 0);
         recipeList = loadRecipe(gameData, userData);
@@ -142,23 +131,10 @@ std::tuple<RList, CList> _loadJsonBCJH(const Json::Value &gameData,
 }
 
 std::tuple<RList, CList> loadJson(const Json::Value &gameData,
-                                  const Json::Value &userData
-#ifndef _WIN32
-                                  ,
-                                  bool allowTool
-#endif
-) {
+                                  const Json::Value &userData, bool allowTool) {
     if (userData["type"] == "bcjh") {
-        return _loadJsonBCJH(gameData, userData
-#ifndef _WIN32
-                             ,
-                             allowTool
-#endif
-        );
+        return _loadJsonBCJH(gameData, userData, allowTool);
     } else {
-#ifdef _WIN32
-        bool allowTool = true;
-#endif
         return _loadJsonInGame(gameData, userData, allowTool);
     }
 }

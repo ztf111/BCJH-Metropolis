@@ -25,16 +25,10 @@ struct Tool {
 class Tags : public std::set<int> {
   public:
     Tags() = default;
-    bool intersectsWith(const Tags &t) const {
-        for (auto i : t) {
-            if (this->count(i))
-                return true;
-        }
-        return false;
-    }
+    bool intersectsWith(const Tags &t) const;
     // Serialization inherited from std::set
 };
-
+class Materials;
 class MaterialCategoryBuff {
   public:
     int vegetable;
@@ -45,7 +39,7 @@ class MaterialCategoryBuff {
     void add(const MaterialCategoryBuff &m);
     std::vector<Printer> getPrinters() const;
     int *operator[](std::string name);
-
+    int operator*(const Materials &m) const;
     template <class Archive> void serialize(Archive &archive) {
         archive(vegetable, meat, fish, creation);
     }
@@ -106,17 +100,7 @@ class Ability {
         archive(stirfry, bake, boil, steam, fry, knife);
     }
 };
-
-class AbilityBuff : public Ability {
-  public:
-    AbilityBuff() {}
-    AbilityBuff(int stirfry, int bake, int boil, int steam, int fry, int knife)
-        : Ability(stirfry, bake, boil, steam, fry, knife) {}
-
-    template <class Archive> void serialize(Archive &archive) {
-        archive(cereal::base_class<Ability>(this));
-    }
-};
+class AbilityBuff;
 class CookAbility : public Ability {
 
   public:
@@ -137,6 +121,16 @@ class CookAbility : public Ability {
         archive(cereal::base_class<Ability>(this));
     }
 };
+class AbilityBuff : public Ability {
+  public:
+    AbilityBuff() {}
+    AbilityBuff(int stirfry, int bake, int boil, int steam, int fry, int knife)
+        : Ability(stirfry, bake, boil, steam, fry, knife) {}
+    int operator*(const CookAbility &a) const;
+    template <class Archive> void serialize(Archive &archive) {
+        archive(cereal::base_class<Ability>(this));
+    }
+};
 class RarityBuff {
     int data[5] = {0, 0, 0, 0, 0};
 
@@ -144,17 +138,7 @@ class RarityBuff {
     /*几火就是几，不用减一*/
     int &operator[](int i) { return data[i - 1]; }
     int operator[](int i) const { return data[i - 1]; }
-    bool print() const {
-        if (data[0] || data[1] || data[2] || data[3] || data[4]) {
-            std::cout << "稀有度加成: ";
-            for (int i = 0; i < 5; i++) {
-                std::cout << data[i] << "% ";
-            }
-            return true;
-        } else {
-            return false;
-        }
-    }
+    bool print() const;
 
     template <class Archive> void serialize(Archive &archive) { archive(data); }
 };
@@ -171,81 +155,73 @@ class DiscretizedBuff {
 
     template <class Archive> void serialize(Archive &archive) { archive(data); }
 };
+class GradeBuff {
+    int data[5] = {0, 0, 0, 0, 0};
+
+  public:
+    int operator[](int i) const { return data[i - 1]; }
+    void gte_add(int threshold, int value);
+    void operator+=(const GradeBuff &a);
+    void print(const std::string &word, bool perc) const;
+    template <class Archive> void serialize(Archive &archive) { archive(data); }
+};
 class AmountBuff {
   private:
     int buff[64] = {0};
 
   public:
     int operator[](int i) const { return buff[i + 1]; }
-    void gte(int threshold, int value) {
-        int sum = 0;
-        for (int i = threshold - 1; i < 64; i++) {
-            sum += buff[i];
-        }
-    }
-    void lte(int threshold, int value) {
-        int sum = 0;
-        for (int i = 0; i < threshold - 1; i++) {
-            sum += buff[i];
-        }
-    }
-    void operator+=(const AmountBuff &a) {
-        for (int i = 0; i < 64; i++) {
-            buff[i] += a.buff[i];
-        }
-    }
-    void print(const std::string &word) const {
-        bool allZero = true;
-        bool allSame = true;
-        int firstValue = buff[0];
+    void gte_add(int threshold, int value);
+    void lte_add(int threshold, int value);
+    void operator+=(const AmountBuff &a);
+    void print(const std::string &word, bool perc) const;
 
-        for (int i = 0; i < 64; ++i) {
-            if (buff[i] != 0) {
-                allZero = false;
-            }
-            if (buff[i] != firstValue) {
-                allSame = false;
-            }
-        }
-
-        if (allZero) {
-            return;
-        }
-        std::cout << word << ": ";
-        if (allSame) {
-            std::cout << firstValue << "%" << std::endl;
-            return;
-        }
-
-        int start = 0;
-        while (start < 64) {
-            int value = buff[start];
-            int end = start;
-            while (end < 64 && buff[end] == value) {
-                ++end;
-            }
-
-            if (start == 0) {
-                std::cout << value << "% (<= " << end << ")";
-            } else if (end == 64) {
-                std::cout << ", " << value << "% (>= " << (start + 1) << ")";
-            } else {
-                std::cout << ", " << value << "% (" << (start + 1) << "~" << end
-                          << ")";
-            }
-
-            start = end;
-        }
-
-        std::cout << std::endl;
-    }
     template <class Archive> void serialize(Archive &archive) { archive(buff); }
 };
 
 class BuffCondition;
 class ConditionalBuff;
 typedef std::vector<std::shared_ptr<ConditionalBuff>> ConditionalEffects;
+struct BuffSum {
+    int perc = 0;
+    int basePerc = 0;
+    int baseAbs = 0;
+    BuffSum operator+(const BuffSum &b) const;
+};
+struct BuffSummary {
+    BuffSum flavor;
+    BuffSum material;
+    BuffSum rarity;
+    BuffSum grade;
+    BuffSum amount;
+    BuffSum ability;
+    BuffSum unconditional;
+    BuffSum sum() const;
+};
+class Chef;
+class PriceBuffData {
+  private:
+    int unconditional = 0;
+    AbilityBuff abilityBuff;
+    FlavorBuff flavorBuff;
+    MaterialCategoryBuff materialBuff;
+    DiscretizedBuff rarityBuff;
+    GradeBuff gradeBuff; // 几级就填当前那一级，比它高的不用填。
+    AmountBuff amountBuff;
+    friend class Skill;
+    friend class Chef;
+    void operator+=(const PriceBuffData &p);
+    PriceBuffData operator+(const PriceBuffData &p) const;
+    void print(const char *title, bool perc) const;
 
+  public:
+    template <class Archive> void serialize(Archive &archive) {
+        archive(unconditional, abilityBuff, flavorBuff, materialBuff,
+                rarityBuff, gradeBuff, amountBuff);
+    }
+};
+class Skill;
+class Recipe;
 class Skill {
 
   public:
@@ -259,23 +235,11 @@ class Skill {
     static std::map<int, Skill> globalFemaleSkillList;
     CookAbility ability;
     CookAbility cookAbilityPercentBuff;
-    AbilityBuff abilityBuff;
-    AbilityBuff abilityBaseBuff;
-    FlavorBuff flavorBuff;
-    FlavorBuff flavorBaseBuff;
-    MaterialCategoryBuff materialBuff;
-    MaterialCategoryBuff materialBaseBuff;
-    DiscretizedBuff rarityBuff;
-    DiscretizedBuff rarityBaseBuff;
-    DiscretizedBuff gradeBuff; // 几级就填当前那一级，比它高的不用填。
-    DiscretizedBuff gradeBaseBuff; // 几级就填当前那一级，比它高的不用填。
-    AmountBuff amountBuff;
-    AmountBuff amountBaseBuff;
+    PriceBuffData pricePerc;
+    PriceBuffData priceBasePerc;
+    PriceBuffData priceBaseAbs;
     DiscretizedBuff amountAdd;
-    int multiToolEffect = 1; // 1: 正常, 2: 翻倍
-
-    int pricePercentBuff = 0;
-    int baseAddBuff = 0;
+    // int multiToolEffect = 1; // 1: 正常, 2: 翻倍
     ConditionalEffects conditionalEffects;
     Skill() = default;
     Skill(Type type) : type(type) {}
@@ -290,15 +254,16 @@ class Skill {
     ~Skill() {} // conditionalEffects should be handled manually.
 
     template <class Archive> void serialize(Archive &archive) {
-        archive(type, chefTagsForPARTIAL, ability, cookAbilityPercentBuff,
-                abilityBuff, abilityBaseBuff, flavorBuff, flavorBaseBuff,
-                materialBuff, materialBaseBuff, rarityBuff, rarityBaseBuff,
-                gradeBuff, multiToolEffect, pricePercentBuff, baseAddBuff,
-                conditionalEffects, amountBuff, amountBaseBuff, amountAdd);
+        archive(type, chefTagsForPARTIAL, amountAdd, ability, pricePerc,
+                priceBasePerc, priceBaseAbs);
     }
+
+    /**
+     * @return pricePerc, priceBasePerc, priceBaseAbs
+     */
+    BuffSummary getBuffs(const Recipe *r) const;
 };
-class Skill;
-class Recipe;
+
 // Records nonconventional buffs that requires consideration of multiple dishes
 class BuffCondition {
 

@@ -40,11 +40,7 @@ Result run(const RuleInfo &rl, const CList &chefList, RList &recipeList,
            int threadId = -1, States *stateResumed = nullptr);
 
 std::tuple<RList, CList> loadJson(const Json::Value &gameData,
-                                  const Json::Value &userData
-#ifndef _WIN32
-                                  ,
-                                  bool allowTool
-#endif
-);
+                                  const Json::Value &userData,
+                                  bool allowTool = true);
 
 #endif

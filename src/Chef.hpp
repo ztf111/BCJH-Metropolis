@@ -71,7 +71,7 @@ class Chef {
 
         coinBuffOn = true;
         for (int i = 1; i <= 5; i++) {
-            Chef::globalSkill.rarityBuff[i] +=
+            Chef::globalSkill.pricePerc.rarityBuff[i] +=
                 getInt(usrBuff["PriceBuff_" + std::to_string(i)]);
             Chef::globalSkill.amountAdd[i] +=
                 getInt(usrBuff["MaxLimit_" + std::to_string(i)]);
@@ -84,12 +84,8 @@ class Chef {
     }
     static void loadAppendChef(CList &chefList, int chefRarity,
                                const Json::Value &gameData,
-                               const Json::Value &usrData
-#ifndef _WIN32
-                               ,
-                               bool allowTool
-#endif
-    );
+                               const Json::Value &usrData,
+                               bool allowTool = true);
     static void loadAppendChefInGame(CList &chefList, int chefRarity,
                                      const Json::Value &gameData,
                                      const Json::Value &usrData,
