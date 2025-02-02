@@ -9,11 +9,11 @@
 
 ## 使用方法（本地安装包）
 
-前往[Releases · hjenryin/BCJH-Metropolis](https://github.com/hjenryin/BCJH-Metropolis/releases)下载最新 `bcjh.zip`，解压后输入白菜菊花id即可使用。
+前往[Releases · hjenryin/BCJH-Metropolis](https://github.com/hjenryin/BCJH-Metropolis/releases)下载最新 `bcjh.zip`，解压后输入游戏内校验码即可使用。
 
 ### 配置厨具
 
- `厨具样例.csv`已在2.0.0弃用。若要配置厨具，请直接使用白采菊花代码。
+ `厨具样例.csv`已在2.0.0弃用。直接使用白采菊花代码，保留高级厨具，新手池厨具可变。
 
 ### 更改迭代次数
 
@@ -22,7 +22,6 @@
 ## 本地编译
 
 如果在windows平台，需要使用MSBuild编译，并将 `data/data.min.json` 改为ANSI编码。如有条件，强烈建议这种本地运行（运行可加速、可多次重复）。
-_**另外，诚挚希望有能力的朋友们帮忙实现在客户端运行！**_
 
 - 在 `./config.hpp` 中设置目标分数 `TARGET_SCORE_APPROXIMATE`，可以偏大但不要偏小。
 - 在 `./data` 下运行 `python update.py -i xxxx`，`xxxx`是白菜菊花ID。
@@ -39,7 +38,6 @@ _**另外，诚挚希望有能力的朋友们帮忙实现在客户端运行！**
     msbuild /m
     ```
   - 使用 `./bcjh` (linux) 或 `./bcjh.exe` (windows) 运行。
-- 如果需要，在 `data/toolEquipped.csv` 配置已经戴上不愿碎掉的厨具。（配置方法参见[此处](https://github.com/hjenryin/BCJH-Metropolis#配置厨具)）
 - 最后在命令行就可以得到输出结果了！（注意顺序）（得到厨师-技法，表示对应新手池厨具）
 
 ## Github云端编译已在2.0.0弃用。
