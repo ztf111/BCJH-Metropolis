@@ -20,8 +20,7 @@
 #include "run.hpp"
 
 size_t NUM_GUESTS, CHEFS_PER_GUEST;
-
-const int targetScore = TARGET_SCORE_APPROXIMATE;
+int TARGET_SCORE_APPROXIMATE = 4000000;
 const int T_MAX_CHEF = T_MAX_CHEF_orig;
 const int T_MAX_RECIPE = T_MAX_RECIPE_orig;
 
@@ -62,6 +61,8 @@ parseArgs(int argc, char *argv[]) {
             iterRecipe = atoi(argv[++i]);
         } else if (arg == "--recover-str") {
             recover_str = argv[++i];
+        } else if (arg == "--target") {
+            TARGET_SCORE_APPROXIMATE = atoi(argv[++i]);
         } else {
             std::cout << "未知参数：" << arg << std::endl;
             exit(1);
@@ -90,7 +91,8 @@ int main(int argc, char *argv[]) {
 #endif
     auto [silent, log, mp, seed, iterChef, iterRecipe, recover_str] =
         parseArgs(argc, argv);
-    SARunner::init(T_MAX_CHEF, T_MAX_RECIPE, iterChef, iterRecipe, targetScore);
+    SARunner::init(T_MAX_CHEF, T_MAX_RECIPE, iterChef, iterRecipe,
+                   TARGET_SCORE_APPROXIMATE);
     auto [directUserData, usrData, gameData, ruleData, fileHash] =
         loadJsonFiles();
     if (directUserData.size() != 0) {

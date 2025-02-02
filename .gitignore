@@ -14,5 +14,5 @@ cmake*
 CMake*
 Make*
 profiler/
-states.bin
+states.txt
 data/directUserData.json
