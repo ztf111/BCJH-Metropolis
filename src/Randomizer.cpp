@@ -1,6 +1,7 @@
 #include "Randomizer.hpp"
 #include "functions.hpp"
 #include "SARunner.hpp"
+#include "exception.hpp"
 const double bestToolProb = 0.9;
 ToolEnum toolHeuristic(States s, int chefId) {
     auto chef = s.getChefPtr(chefId);
@@ -160,6 +161,23 @@ bool ChefRandomizer::swapChefTool(States &s) const {
     } else {
         return true;
     }
+}
+States RecipeRandomizer::iterPropose(States s, int i) {
+    if (iter == r->end()) {
+        iter = r->begin();
+        throw IterStopException();
+    }
+    while ((iter->rarity != s.recipe[i]->rarity) ||
+           (inArray(s.recipe, NUM_DISHES, &(*iter)))) {
+        iter++;
+        if (iter == r->end()) {
+            iter = r->begin();
+            throw IterStopException();
+        }
+    }
+    s.recipe[i] = &(*iter);
+    iter++;
+    return s;
 }
 States RecipeRandomizer::operator()(States s) {
 #ifdef MEASURE_TIME

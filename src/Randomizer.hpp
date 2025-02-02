@@ -49,11 +49,15 @@ class RecipeRandomizer : public Randomizer {
 
   public:
     RecipeRandomizer(const CList *c, RList *r, const RuleInfo *rl)
-        : Randomizer(c, r, rl) {}
+        : Randomizer(c, r, rl) {
+        iter = r->begin();
+    }
     States operator()(States s) override;
+    States iterPropose(States s, int i);
     ~RecipeRandomizer() override {}
 
   private:
+    std::vector<Recipe>::iterator iter;
     bool randomRecipe(States &s) const;
 };
 class ChefRandomizer : public Randomizer {

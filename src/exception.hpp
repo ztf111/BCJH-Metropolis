@@ -53,5 +53,10 @@ class UnknownSkillWarning {
                   << std::endl;
     }
 };
+class IterStopException : public std::exception {
+  public:
+    virtual const char *what() const throw() { return "迭代停止。"; }
+    IterStopException() throw() {}
+};
 #define RANDOM_SEARCH_TIMEOUT 100
 #endif

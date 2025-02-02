@@ -37,8 +37,11 @@ States *StatesSerializer::deserialize(std::istream &stream) {
         state->setChef(i, chefs[i]);
     }
     for (size_t i = 0; i < NUM_CHEFS * DISH_PER_CHEF; i++) {
-        if (recipe[i] != -1) {
-            state->recipe[i] = rl->byId(recipe[i]);
+        auto *r = rl->byId(recipe[i]);
+        if (r == NULL) {
+            return NULL;
+        } else {
+            state->recipe[i] = r;
         }
     }
     return state;

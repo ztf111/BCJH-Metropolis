@@ -15,10 +15,9 @@ Recipe::Recipe(Json::Value &recipe, bool isExpert) {
     this->name = recipe["name"].asString();
     this->id = recipe["recipeId"].asInt();
     this->rarity = recipe["rarity"].asInt();
+    this->price = recipe["price"].asInt();
     if (isExpert) {
-        this->price = recipe["exPrice"].asInt();
-    } else {
-        this->price = recipe["price"].asInt();
+        this->price += recipe["exPrice"].asInt();
     }
     this->cookAbility.stirfry = recipe["stirfry"].asInt();
     this->cookAbility.bake = recipe["bake"].asInt();

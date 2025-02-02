@@ -135,7 +135,7 @@ States SARunner::run(States *s0,
 #if defined(_WIN32) || defined(EMSCRIPTEN_PROGRESS)
     int progressPercent = 0;
 #endif
-
+    int changed = 0;
     while (step < this->stepMax) {
 
 #ifdef EMSCRIPTEN_PROGRESS
@@ -183,6 +183,7 @@ States SARunner::run(States *s0,
         if (energy > this->bestEnergy) {
             this->bestEnergy = energy;
             this->bestState = s;
+            changed += 1;
         }
         t = coolingScheduleFunc(this->stepMax, step, this->tMax, this->tMin);
         if (t <= this->tMin) {
@@ -198,6 +199,33 @@ States SARunner::run(States *s0,
         }
         step++;
     }
+    // Special case: if this is the last step for randomizing the recipe, we go
+    // over all recipes of the same rarity
+    // if (RecipeRandomizer *rr =
+    //         dynamic_cast<RecipeRandomizer *>(this->randomMoveFunc)) {
+    //     States newS;
+    //     int changedFinal = 0;
+    //     for (size_t i = 0; i < NUM_DISHES; i++) {
+    //         while (true) {
+    //             try {
+    //                 newS = rr->iterPropose(s, i);
+    //                 int score = sumPrice(*rl, newS);
+    //                 if (score > this->bestEnergy) {
+    //                     this->bestEnergy = score;
+    //                     this->bestState = newS;
+    //                     s = newS;
+    //                     changedFinal += 1;
+    //                 }
+    //             } catch (IterStopException &e) {
+    //                 break;
+    //             }
+    //         }
+    //     }
+    //     if (changedFinal > 0) {
+    //         iterRecipe *= 1.001;
+    //     }
+    //     std::cout << changedFinal << "/" << iterRecipe << " ";
+    // }
 #ifdef _WIN32
     if (progress && !silent) {
         MultiThreadProgressBar::getInstance(threadId)->print(
