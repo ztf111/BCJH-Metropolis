@@ -340,182 +340,21 @@ void Skill::loadJson(const Json::Value &v) {
             }
             skill.type = typeMap[conditionStr];
             int value = effect["value"].asInt();
-            if (type == "Gold_Gain") {
-                AssertUnknownWarn(effect["cal"].asString() == "Percent");
-                skill.pricePerc.unconditional = value;
-            } else if (type == "UseAll") {
-                globalTag = GlobalTag::DEFAULT_ALL;
-                std::string cal = effect["cal"].asString();
-                int rarity = effect["rarity"].asInt();
-                if (conditionStr == "Global" && cal == "Percent") {
-                    skill.pricePerc.rarityBuff[rarity] += value;
-                } else {
-                    UnknownWarn;
-                }
-            } else if (type == "MaxEquipLimit") {
-                if (conditionStr == "Global") {
-                    globalTag = GlobalTag::DEFAULT_ALL;
-                }
-                int rarity = effect["rarity"].asInt();
-                skill.amountAdd[rarity] += value;
-            } else if (type == "MutiEquipmentSkill") {
-                // 为啥图鉴网接口时muti而不是multi
-                // assert(value % 100 == 0);
-                // if (value % 100 == 0) {
-                //     skill.multiToolEffect = 1 + value / 100;
-                // } else {
-                UnknownWarn;
-                // }
-            } else if (nameOfTools.count(type)) {
-                if (conditionStr == "Global") {
-                    if (effect.isMember("tag")) {
-                        globalTag =
-                            GlobalTag::GlobalTagEnum(effect["tag"].asInt());
-                    } else {
-                        globalTag = GlobalTag::DEFAULT_ALL;
-                    }
-                }
-                std::string cal = effect["cal"].asString();
-                CookAbility *ptr = NULL;
-                if (cal == "Abs")
-                    ptr = &skill.ability;
-                else {
-                    ptr = &skill.cookAbilityPercentBuff;
-                }
-                *(*ptr)[type] = value;
-            } else if (type.starts_with("Use")) {
-                std::string specificType = type.substr(3);
-                AssertUnknownWarn(effect["cal"].asString() == "Percent");
-                auto &perc = skill.pricePerc;
-                if (perc.abilityBuff[specificType] != NULL) {
-                    *perc.abilityBuff[specificType] = value;
-                } else if (perc.flavorBuff[specificType] != NULL) {
-                    *perc.flavorBuff[specificType] = value;
-                } else if (perc.materialBuff[specificType] != NULL) {
-                    *perc.materialBuff[specificType] = value;
-                } else {
-                    throw UnknownSkillException(skillJson["desc"].asString() +
-                                                "（debug代码：" + type + ")");
-                }
-            } else if (type == "BasicPrice") {
-                auto calString = effect["cal"].asString();
-                if (calString != "Percent" && calString != "Abs") {
-                    throw UnknownSkillException("cal值不是Percent或Abs，来自" +
-                                                skillJson["desc"].asString() +
-                                                "（debug代码：" + type + ")");
-                }
-                if (!effect.isMember("conditionType")) {
-                    // 菜谱基础售价
-                    // 下位上场厨师基础售价
-                    if (calString == "Percent")
-                        skill.priceBasePerc.unconditional += value;
-                    else
-                        skill.priceBaseAbs.unconditional += value;
-
-                } else {
-                    std::string conditionType =
-                        effect["conditionType"].asString();
-                    std::set<std::string> skippedSkills = {
-                        "CookbookRarity",
-                        "ExcessCookbookNum",
-                        "FewerCookbookNum",
-                        "PerRank",
-                        "Rank",
-                        "SameSkill",
-                    };
-                    if (skippedSkills.count(conditionType)) {
-                        AssertUnknownWarn(effect["cal"].asString() ==
-                                          "Percent");
-
-                        // Conditional Buff:
-                        // 每制作一种神级料理菜谱基础售价
-                        // 制作三种同技法料理在场基础售价
-
-                        // Field in Skill designated:
-                        // 制作小于22份的料理该料理基础售价 FewerCookbookNum
-                        // 制作一二火料理基础售价
-
-                        // Save for later
-                    } else if (conditionType == "ChefTag") {
-                        if (calString == "Percent")
-                            skill.priceBasePerc.unconditional += value;
-                        else
-                            skill.priceBaseAbs.unconditional += value;
-                    } else {
-                        UnknownWarn;
-                        // Not implemented:
-                        // 使用水果的料理基础售价 CookbookTag
-                    }
-                }
-            } else if (type == "CookbookPrice") {
-                AssertUnknownWarn(effect["cal"].asString() == "Percent");
-                if (!effect.isMember("conditionType")) {
-                    skill.pricePerc.unconditional += value;
-                } else {
-                    std::string conditionType =
-                        effect["conditionType"].asString();
-                    if (conditionType == "CookbookRarity" ||
-                        conditionType == "ExcessCookbookNum" ||
-                        conditionType == "FewerCookbookNum" ||
-                        conditionType == "Rank") {
-
-                        // Conditional Buff:
-                        // 每制作一种神级料理菜谱基础售价
-                        // 制作三种同技法料理在场基础售价
-
-                        // Field in Skill designated:
-                        // 制作一星和二星料理售价+20% CookBookRarity
-                        // 制作小于22份的料理该料理基础售价 FewerCookbookNum
-                        // 制作大于17份的料理时售价 + 40 % ExcessCookbookNum
-                        // 制作神级料理售价+70% Rank
-
-                        // Save for later
-                    } else if (conditionType == "ChefTag") {
-                        skill.pricePerc.unconditional += value;
-                    } else {
-                        UnknownWarn;
-                        // Not implemented:
-                        // 使用水果的料理基础售价 CookbookTag
-                    }
-                }
-            } else if (type.starts_with("BasicPriceUse")) {
-                auto calString = effect["cal"].asString();
-                if (calString != "Percent" && calString != "Abs") {
-                    throw UnknownSkillException("cal值不是Percent或Abs，来自" +
-                                                skillJson["desc"].asString() +
-                                                "（debug代码：" + type + ")");
-                }
-
-                PriceBuffData *ptr = NULL;
-                if (calString == "Abs") {
-                    ptr = &skill.priceBaseAbs;
-                } else {
-                    ptr = &skill.priceBasePerc;
-                }
-
-                std::string type_name = type.substr(13);
-                if (ptr->abilityBuff[type_name] != NULL) {
-                    *ptr->abilityBuff[type_name] = value;
-                } else if (ptr->flavorBuff[type_name] != NULL) {
-                    *ptr->flavorBuff[type_name] = value;
-                } else if (ptr->materialBuff[type_name] != NULL) {
-                    *ptr->materialBuff[type_name] = value;
-                } else {
-                    throw UnknownSkillException(skillJson["desc"].asString() +
-                                                "（debug代码：" + type + ")");
-                }
-
-            } else {
-                missingSkills[type] = skillJson["desc"].asString();
-                UnknownWarn;
-                continue;
-            }
             std::shared_ptr<BuffCondition> conditionPtr;
-            if (effect.isMember("conditionType")) {
+
+            bool skillInheritConditional = true;
+            if (!effect.isMember("conditionType"))
+                skillInheritConditional = false;
+            else {
                 auto conditionType = effect["conditionType"].asString();
-                int cvalue = 0;
-                if (effect.isMember("conditionValue"))
-                    cvalue = getInt(effect["conditionValue"]);
+                std::set<std::string> specialConditions = {
+                    "PerRank", "SameSkill", "ChefTag"};
+                if (specialConditions.contains(conditionType)) {
+                    skillInheritConditional = false;
+                }
+            }
+
+            if (skillInheritConditional) {
                 PriceBuffData *buffTarget = NULL;
                 auto calString = effect["cal"].asString();
                 if (type == "BasicPrice" && calString == "Percent")
@@ -525,42 +364,166 @@ void Skill::loadJson(const Json::Value &v) {
                 else if (type == "CookbookPrice") {
                     AssertUnknownWarn(calString == "Percent");
                     buffTarget = &skill.pricePerc;
-                } else {
-                    UnknownWarn;
                 }
-
+                auto conditionType = effect["conditionType"].asString();
+                int cvalue = 0;
+                if (effect.isMember("conditionValue"))
+                    cvalue = getInt(effect["conditionValue"]);
                 if (conditionType == "CookbookRarity") {
+                    AssertUnknownWarn(buffTarget != NULL);
                     for (auto &i : effect["conditionValueList"]) {
                         buffTarget->rarityBuff[getInt(i)] += value;
                     }
-                } else if (conditionType == "PerRank") {
-                    conditionPtr = std::make_shared<GradeBuffCondition>(cvalue);
                 } else if (conditionType == "ExcessCookbookNum") {
+                    AssertUnknownWarn(buffTarget != NULL);
                     AssertUnknownWarn(cvalue != 0);
                     buffTarget->amountBuff.gte_add(cvalue, value);
                 } else if (conditionType == "FewerCookbookNum") {
+                    AssertUnknownWarn(buffTarget != NULL);
                     AssertUnknownWarn(cvalue != 0);
                     buffTarget->amountBuff.lte_add(cvalue, value);
-                } else if (conditionType == "SameSkill") {
-                    conditionPtr =
-                        std::make_shared<ThreeSameCookAbilityBuffCondition>();
                 } else if (conditionType == "Rank") {
+                    AssertUnknownWarn(buffTarget != NULL);
                     AssertUnknownWarn(cvalue != 0);
                     buffTarget->gradeBuff.gte_add(cvalue, value);
-                } else if (conditionType == "ChefTag") {
-                    if (conditionStr == "Partial") {
-                        auto conditionValueList = effect["conditionValueList"];
-                        for (auto tag : conditionValueList) {
-                            skill.chefTagsForPARTIAL.insert(tag.asInt());
-                        }
-                    } else {
-                        UnknownWarn;
-                    }
                 } else {
                     missingSkills[conditionType] = skillJson["desc"].asString();
                     UnknownWarn;
                 }
+            } else {
+                if (type == "Gold_Gain") {
+                    AssertUnknownWarn(effect["cal"].asString() == "Percent");
+                    skill.pricePerc.unconditional = value;
+                } else if (type == "UseAll") {
+                    globalTag = GlobalTag::DEFAULT_ALL;
+                    std::string cal = effect["cal"].asString();
+                    int rarity = effect["rarity"].asInt();
+                    if (conditionStr == "Global" && cal == "Percent") {
+                        skill.pricePerc.rarityBuff[rarity] += value;
+                    } else {
+                        UnknownWarn;
+                    }
+                } else if (type == "MaxEquipLimit") {
+                    if (conditionStr == "Global") {
+                        globalTag = GlobalTag::DEFAULT_ALL;
+                    }
+                    int rarity = effect["rarity"].asInt();
+                    skill.amountAdd[rarity] += value;
+                } else if (type == "MutiEquipmentSkill") {
+                    // 为啥图鉴网接口时muti而不是multi
+                    // assert(value % 100 == 0);
+                    // if (value % 100 == 0) {
+                    //     skill.multiToolEffect = 1 + value / 100;
+                    // } else {
+                    UnknownWarn;
+                    // }
+                } else if (nameOfTools.count(type)) {
+                    if (conditionStr == "Global") {
+                        if (effect.isMember("tag")) {
+                            globalTag =
+                                GlobalTag::GlobalTagEnum(effect["tag"].asInt());
+                        } else {
+                            globalTag = GlobalTag::DEFAULT_ALL;
+                        }
+                    }
+                    std::string cal = effect["cal"].asString();
+                    CookAbility *ptr = NULL;
+                    if (cal == "Abs")
+                        ptr = &skill.ability;
+                    else {
+                        ptr = &skill.cookAbilityPercentBuff;
+                    }
+                    *(*ptr)[type] = value;
+                } else if (type.starts_with("Use")) {
+                    std::string specificType = type.substr(3);
+                    AssertUnknownWarn(effect["cal"].asString() == "Percent");
+                    auto &perc = skill.pricePerc;
+                    if (perc.abilityBuff[specificType] != NULL) {
+                        *perc.abilityBuff[specificType] = value;
+                    } else if (perc.flavorBuff[specificType] != NULL) {
+                        *perc.flavorBuff[specificType] = value;
+                    } else if (perc.materialBuff[specificType] != NULL) {
+                        *perc.materialBuff[specificType] = value;
+                    } else {
+                        throw UnknownSkillException(
+                            skillJson["desc"].asString() + "（debug代码：" +
+                            type + ")");
+                    }
+                } else if (type == "BasicPrice") {
+                    auto calString = effect["cal"].asString();
+                    if (calString != "Percent" && calString != "Abs") {
+                        throw UnknownSkillException(
+                            "cal值不是Percent或Abs，来自" +
+                            skillJson["desc"].asString() + "（debug代码：" +
+                            type + ")");
+                    }
+                    if (calString == "Percent")
+                        skill.priceBasePerc.unconditional += value;
+                    else
+                        skill.priceBaseAbs.unconditional += value;
+                } else if (type == "CookbookPrice") {
+                    AssertUnknownWarn(effect["cal"].asString() == "Percent");
+                    skill.pricePerc.unconditional += value;
+                } else if (type.starts_with("BasicPriceUse")) {
+                    auto calString = effect["cal"].asString();
+                    if (calString != "Percent" && calString != "Abs") {
+                        throw UnknownSkillException(
+                            "cal值不是Percent或Abs，来自" +
+                            skillJson["desc"].asString() + "（debug代码：" +
+                            type + ")");
+                    }
+
+                    PriceBuffData *ptr = NULL;
+                    if (calString == "Abs") {
+                        ptr = &skill.priceBaseAbs;
+                    } else {
+                        ptr = &skill.priceBasePerc;
+                    }
+
+                    std::string type_name = type.substr(13);
+                    if (ptr->abilityBuff[type_name] != NULL) {
+                        *ptr->abilityBuff[type_name] = value;
+                    } else if (ptr->flavorBuff[type_name] != NULL) {
+                        *ptr->flavorBuff[type_name] = value;
+                    } else if (ptr->materialBuff[type_name] != NULL) {
+                        *ptr->materialBuff[type_name] = value;
+                    } else {
+                        throw UnknownSkillException(
+                            skillJson["desc"].asString() + "（debug代码：" +
+                            type + ")");
+                    }
+
+                } else {
+                    missingSkills[type] = skillJson["desc"].asString();
+                    UnknownWarn;
+                    continue;
+                }
+                if (effect.isMember("conditionType")) {
+                    auto conditionType = effect["conditionType"].asString();
+                    int cvalue = 0;
+                    if (effect.isMember("conditionValue"))
+                        cvalue = getInt(effect["conditionValue"]);
+
+                    if (conditionType == "PerRank") {
+                        conditionPtr =
+                            std::make_shared<GradeBuffCondition>(cvalue);
+                    } else if (conditionType == "SameSkill") {
+                        conditionPtr = std::make_shared<
+                            ThreeSameCookAbilityBuffCondition>();
+                    } else if (conditionType == "ChefTag") {
+                        if (conditionStr == "Partial") {
+                            auto conditionValueList =
+                                effect["conditionValueList"];
+                            for (auto tag : conditionValueList) {
+                                skill.chefTagsForPARTIAL.insert(tag.asInt());
+                            }
+                        } else {
+                            UnknownWarn;
+                        }
+                    }
+                }
             }
+
             if (error_msg) {
                 continue;
             }

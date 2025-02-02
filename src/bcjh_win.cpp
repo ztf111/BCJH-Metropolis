@@ -139,7 +139,7 @@ int main(int argc, char *argv[]) {
                                      std::ref(chefList), std::ref(recipeList),
                                      0, !silent, seed++, (int)i, statesRecord[i]));
     }
-    int max_score = 0;
+    int max_score = INT32_MIN;
     Result result;
     for (auto &future : futures) {
         Result tmp = future.get();
