@@ -101,8 +101,7 @@ int main(int argc, char *argv[]) {
                   << NO_FORMAT << std::endl;
     }
     testJsonUpdate(gameData, usrData);
-    auto [num_guests, chefs_per_guest, rl] =
-        loadFirstBanquetRule(ruleData, true);
+    auto [num_guests, chefs_per_guest, rl] = loadFirstBanquetRule(ruleData);
     if (num_guests == -1) {
         std::cout << "读取规则失败。" << std::endl;
         exit(1);

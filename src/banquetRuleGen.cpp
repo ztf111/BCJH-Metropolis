@@ -100,8 +100,8 @@ loadBanquetRuleFromJson(const Json::Value &rulesTarget, const GDMap &allBuffs,
 /**
  * @todo Error handling.
  */
-std::tuple<int, int, RuleInfo> loadFirstBanquetRule(const Json::Value &gameData,
-                                                    bool print) {
+std::tuple<int, int, RuleInfo>
+loadFirstBanquetRule(const Json::Value &gameData) {
     auto &buffsGD = gameData["buffs"];
     auto &intentsGD = gameData["intents"];
     auto &rulesGD = gameData["rules"];
@@ -113,15 +113,6 @@ std::tuple<int, int, RuleInfo> loadFirstBanquetRule(const Json::Value &gameData,
     for (auto &intent : intentsGD) {
         intentsMap[intent["intentId"].asInt()] = intent;
     }
-    // find the rule in rulesGD with Id ruleID
-    Json::Value ruleGD = rulesGD[0];
-    if (print) {
-        auto ruleName = ruleGD.isMember("Title") ? ruleGD["Title"].asString()
-                                                 : ruleGD["title"].asString();
-        std::cout << "请核对规则：" << UNDERLINE << ruleName << NO_FORMAT
-                  << "。若规则还是上周的，说明还没有更新，请过段时间再运行。"
-                  << std::endl;
-    }
 
     std::vector<std::string> ruleNames;
     for (const auto &rule : rulesGD) {
@@ -132,10 +123,17 @@ std::tuple<int, int, RuleInfo> loadFirstBanquetRule(const Json::Value &gameData,
     int selectedIndex = 0;
     bool ruleSelected = false;
 
+    std::cout << "默认最新规则：" << ruleNames[selectedIndex]
+              << "，确认请按回车，按其他任意键选择其他规则。" << std::endl;
+    int key = _getch();
+    if (key == 13) { // Enter
+        ruleSelected = true;
+    }
+
     while (!ruleSelected) {
         system("cls");
-        std::cout << "请使用方向键选择规则，若没有本周规则，说明还没有更新，请"
-                     "过段时间再运行。"
+        std::cout << "请使用方向键选择规则，回车确认，若没有本周规则，说明还没"
+                     "有更新，请过段时间再运行。"
                   << std::endl;
         for (size_t i = 0; i < ruleNames.size(); ++i) {
             if (i == selectedIndex) {
@@ -145,7 +143,7 @@ std::tuple<int, int, RuleInfo> loadFirstBanquetRule(const Json::Value &gameData,
             }
         }
 
-        int key = _getch();
+        key = _getch();
         switch (key) {
         case 72: // Up arrow
             selectedIndex =
@@ -163,7 +161,7 @@ std::tuple<int, int, RuleInfo> loadFirstBanquetRule(const Json::Value &gameData,
     }
 
     std::cout << "已选择规则：" << ruleNames[selectedIndex] << std::endl;
-    ruleGD = rulesGD[selectedIndex];
+    auto ruleGD = rulesGD[selectedIndex];
     Json::Value rulesTarget;
     if (ruleGD.isMember("Group")) {
         rulesTarget = ruleGD["Group"];

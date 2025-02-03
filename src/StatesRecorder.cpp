@@ -26,13 +26,16 @@ void StatesSerializer::serialize(std::ostream &stream, States *state) {
 
 States *StatesSerializer::deserialize(std::istream &stream) {
     States *state = new States();
-    std::vector<Chef> chefs(NUM_CHEFS);
-    std::vector<int> recipe(DISH_PER_CHEF * NUM_CHEFS);
+    std::vector<Chef> chefs;
+    std::vector<int> recipe;
     std::stringstream iss;
     decompress(stream, iss);
     cereal::PortableBinaryInputArchive archive(iss);
     archive(chefs, recipe);
-
+    if (chefs.size() != NUM_CHEFS ||
+        recipe.size() != NUM_CHEFS * DISH_PER_CHEF) {
+        return NULL;
+    }
     for (size_t i = 0; i < NUM_CHEFS; i++) {
         state->setChef(i, chefs[i]);
     }

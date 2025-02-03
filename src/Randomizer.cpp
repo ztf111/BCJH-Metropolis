@@ -214,18 +214,12 @@ States ChefRandomizer::operator()(States s) {
     debugIntegrity(s);
     double random = (double)rand() / RAND_MAX;
     double p_randomChef = 0.9;
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-    int path;
-#pragma GCC diagnostic pop
     calls++;
     p_randomChef = 0.85;
     if (random < 1 - p_randomChef) {
-        path = 0;
         success += swapChefTool(s);
 
     } else if (random >= 1 - p_randomChef) {
-        path = 1;
         success += randomChef(s);
     }
 
@@ -253,7 +247,7 @@ bool Randomizer::unrepeatedRandomRecipe(const Skill &skill, Recipe **recipes,
     int count = 0;
     Recipe *r = NULL;
     auto &rl = this->r;
-    float p_sameRarity = 0.4;
+    double p_sameRarity = 0.4;
     do {
         if (rand() / RAND_MAX < p_sameRarity) {
             int rarity = recipes[index]->rarity;
