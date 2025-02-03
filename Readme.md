@@ -23,8 +23,7 @@
 
 如果在windows平台，需要使用MSBuild编译，并将 `data/data.min.json` 改为ANSI编码。如有条件，强烈建议这种本地运行（运行可加速、可多次重复）。
 
-- 在 `./config.hpp` 中设置目标分数 `TARGET_SCORE_APPROXIMATE`，可以偏大但不要偏小。
-- 在 `./data` 下运行 `python update.py -i xxxx`，`xxxx`是白菜菊花ID。
+- 在 `./data` 下运行 `python update.py --BCJH xxxx`，`xxxx`是游戏中的白菜菊花校验码。
 - 编译、运行：
 
   - 在根目录新建 `build` 文件夹并 `cd` 至build
@@ -39,6 +38,7 @@
     ```
   - 使用 `./bcjh` (linux) 或 `./bcjh.exe` (windows) 运行。
 - 最后在命令行就可以得到输出结果了！（注意顺序）（得到厨师-技法，表示对应新手池厨具）
+- 注：linux下不支持多任务选择
 
 ## Github云端编译已在2.0.0弃用。
 

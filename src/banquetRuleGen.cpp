@@ -3,7 +3,9 @@
 #include "functions.hpp"
 #include <cassert>
 #include <memory>
+#ifdef _WIN32
 #include <conio.h>
+#endif
 double randomRecipeTime = 0;
 double randomChefTime = 0;
 double banquetRuleTime = 0;
@@ -121,6 +123,7 @@ loadFirstBanquetRule(const Json::Value &gameData) {
     }
 
     int selectedIndex = 0;
+#ifdef _WIN32
     bool ruleSelected = false;
 
     std::cout << "默认最新规则：" << ruleNames[selectedIndex]
@@ -160,7 +163,8 @@ loadFirstBanquetRule(const Json::Value &gameData) {
         }
     }
 
-    std::cout << "已选择规则：" << ruleNames[selectedIndex] << std::endl;
+#endif
+    std::cout << "当前宴会规则：" << ruleNames[selectedIndex] << std::endl;
     auto ruleGD = rulesGD[selectedIndex];
     Json::Value rulesTarget;
     if (ruleGD.isMember("Group")) {

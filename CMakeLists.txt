@@ -89,7 +89,6 @@ else()
     add_executable(${PJNAME} ${src_LINUX})
     set(target_WINDOWS ${PJNAME}_win)
     add_executable(${target_WINDOWS} ${src_WINDOWS})
-    target_compile_definitions(${target_WINDOWS} PRIVATE -D_WIN32)
     set(CMAKE_MAKE_PROGRAM "${CMAKE_MAKE_PROGRAM} -j$(nproc)")
 
 endif()
