@@ -3,6 +3,7 @@
 #include "functions.hpp"
 #include <cassert>
 #include <memory>
+#include <conio.h>
 double randomRecipeTime = 0;
 double randomChefTime = 0;
 double banquetRuleTime = 0;
@@ -121,6 +122,48 @@ std::tuple<int, int, RuleInfo> loadFirstBanquetRule(const Json::Value &gameData,
                   << "。若规则还是上周的，说明还没有更新，请过段时间再运行。"
                   << std::endl;
     }
+
+    std::vector<std::string> ruleNames;
+    for (const auto &rule : rulesGD) {
+        ruleNames.push_back(rule.isMember("Title") ? rule["Title"].asString()
+                                                   : rule["title"].asString());
+    }
+
+    int selectedIndex = 0;
+    bool ruleSelected = false;
+
+    while (!ruleSelected) {
+        system("cls");
+        std::cout << "请使用方向键选择规则，若没有本周规则，说明还没有更新，请"
+                     "过段时间再运行。"
+                  << std::endl;
+        for (size_t i = 0; i < ruleNames.size(); ++i) {
+            if (i == selectedIndex) {
+                std::cout << "> " << ruleNames[i] << std::endl;
+            } else {
+                std::cout << "  " << ruleNames[i] << std::endl;
+            }
+        }
+
+        int key = _getch();
+        switch (key) {
+        case 72: // Up arrow
+            selectedIndex =
+                (selectedIndex - 1 + ruleNames.size()) % ruleNames.size();
+            break;
+        case 80: // Down arrow
+            selectedIndex = (selectedIndex + 1) % ruleNames.size();
+            break;
+        case 13: // Enter
+            ruleSelected = true;
+            break;
+        default:
+            break;
+        }
+    }
+
+    std::cout << "已选择规则：" << ruleNames[selectedIndex] << std::endl;
+    ruleGD = rulesGD[selectedIndex];
     Json::Value rulesTarget;
     if (ruleGD.isMember("Group")) {
         rulesTarget = ruleGD["Group"];

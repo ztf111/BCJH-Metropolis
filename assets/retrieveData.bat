@@ -11,7 +11,7 @@ echo 如果发现有问题，欢迎到 https://github.com/hjenryin/BCJH-Metropolis/issues/n
 powershell -command "$file = 'ruleData.json'; $halfHourAgo = (Get-Date).AddMinutes(-30); $modifiedTime = (Get-Item $file).LastWriteTime; $modifiedTime -lt $halfHourAgo" | findstr "True" >NUL && call:download_data || echo 半小时内已更新过规则，跳过下载
 
 set "bcjhid="
-set /p bcjhid=如果需要重新下载用户配置，请输入游戏内六位校验码（左上角头像->设置->白菜菊花，注意不是白采菊花内上传的数据ID）；否则直接回车：
+set /p bcjhid="如果需要重新下载用户配置，请输入游戏内六位校验码（左上角头像->设置->白菜菊花，注意不是白采菊花内上传的数据ID）；否则直接回车："
 
 if "%bcjhid%"=="" (
     echo 未输入id，跳过下载用户配置
@@ -19,21 +19,20 @@ if "%bcjhid%"=="" (
 
 if not "%bcjhid%"=="" (
     echo 正在下载用户配置
-    @REM powershell -command curl -o "userData.json" "https://bcjh.xyz/api/download_data?id=%bcjhid%"
+    @REM 下载用户数据
+    powershell -command curl -o "directUserData.json" "https://yx518.com/api/archive.do?token=%bcjhid%"
+    @REM 检测是否下载成功
     powershell -command $json=$(iwr -uri "https://yx518.com/api/archive.do?token=%bcjhid%" ^| ConvertFrom-Json^) ^; if ($json.ret -eq 'S'^) { Write-Host 下载成功 -ForegroundColor:Green } else { Write-Host 下载失败，请检查id是否正确 -BackgroundColor:Red -ForegroundColor:White ^}
-    win-iconv\iconv.exe -f utf-8 -t gbk directUserData.json > tmp 2>NUL
-    if %ERRORLEVEL% EQU 0 (
-        del userData.json
-        ren tmp userData.json
-    )
+    win-iconv\iconv.exe -f utf-8 -t gbk directUserData.json > tmp.json
+    del directUserData.json
+    ren tmp.json directUserData.json
 )
 echo=
+@REM ****************************************************************************************************
+@REM ** 如有需要，可以在此修改-C，-R后的数字来更改迭代次数，以及--target后的数字来更改最大目标 **
+@REM ****************************************************************************************************
 
-@REM ******************************************************
-@REM ** 如有需要，可以在此修改-C，-R后的数字来更改迭代次数。 **
-@REM ******************************************************
-
-.\bcjh.exe -C 5000 -R 1000
+.\bcjh.exe -C 5000 -R 1000 --target 5000000
 @REM -h 帮助
 
 
