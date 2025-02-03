@@ -11,7 +11,7 @@ echo 如果发现有问题，欢迎到 https://github.com/hjenryin/BCJH-Metropolis/issues/n
 powershell -command "$file = 'ruleData.json'; $halfHourAgo = (Get-Date).AddMinutes(-30); $modifiedTime = (Get-Item $file).LastWriteTime; $modifiedTime -lt $halfHourAgo" | findstr "True" >NUL && call:download_data || echo 半小时内已更新过规则，跳过下载
 
 set "bcjhid="
-set /p bcjhid="如果需要重新下载用户配置，请输入游戏内六位校验码（左上角头像->设置->白菜菊花，注意不是白采菊花内上传的数据ID）；否则直接回车："
+set /p bcjhid="如果需要重新下载用户配置，请输入游戏内六位校验码（左上角头像->设置->白菜菊花，注意不是白菜菊花内上传的数据ID）；否则直接回车："
 
 if "%bcjhid%"=="" (
     echo 未输入id，跳过下载用户配置
