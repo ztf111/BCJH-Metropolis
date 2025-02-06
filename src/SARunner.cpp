@@ -146,7 +146,7 @@ States SARunner::run(States *s0,
         }
 
 #endif
-
+#ifndef EMSCRIPTEN
         if (progress && !silent) {
             if (step * 10 / stepMax > progressPercent) {
                 progressPercent = step * 10 / stepMax;
@@ -155,7 +155,7 @@ States SARunner::run(States *s0,
                     "当前最高分数：" + std::to_string(this->bestEnergy));
             }
         }
-
+#endif
         States newS;
         newS = (*randomMoveFunc)(s);
         debugIntegrity(newS);
@@ -222,13 +222,15 @@ States SARunner::run(States *s0,
     //     }
     //     std::cout << changedFinal << "/" << iterRecipe << " ";
     // }
-    if (progress && !silent) {
-        MultiThreadProgressBar::getInstance(threadId)->print(
-            threadId, 100, "最高分数：" + std::to_string(this->bestEnergy));
-    }
 #ifdef EMSCRIPTEN_PROGRESS
     if (postProgress != emscripten::val::null()) {
         postProgress(100);
+    }
+#endif
+#ifndef EMSCRIPTEN
+    if (progress && !silent) {
+        MultiThreadProgressBar::getInstance(threadId)->print(
+            threadId, 100, "最高分数：" + std::to_string(this->bestEnergy));
     }
 #endif
 #ifdef VIS_HISTORY
