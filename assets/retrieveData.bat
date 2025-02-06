@@ -32,16 +32,19 @@ echo=
 @REM ** 如有需要，可以在此修改-C，-R后的数字来更改迭代次数，以及--target后的数字来更改最大目标 **
 @REM ****************************************************************************************************
 
+:run_main
 .\bcjh.exe -C 5000 -R 1000 --target 5000000
 @REM -h 帮助
-
 
 @REM *********************
 @REM ** 这一部分无需修改 **
 @REM *********************
-echo 按任意键关闭
-pause >NUL
-goto :eof
+choice /c qr /m "按q关闭，按r重新运行："
+if errorlevel 2 (
+    goto :run_main
+) else (
+    goto :eof
+)
 
 
 :download_data
@@ -57,7 +60,7 @@ if %ERRORLEVEL% EQU 0 (
 )
 
 powershell -command "Write-Host '正在获取最新厨师菜谱... ' -NoNewline"
-powershell -command curl -o "data.min.json" "https://yuwenxifan.github.io/bcjhMobile/data/data.min.json"
+powershell -command curl -o "data.min.json" "https://bcjh.xyz/data/data.min.json"
 win-iconv\iconv.exe -f utf-8 -t gbk data.min.json > tmp 
 if %ERRORLEVEL% EQU 0 (
     del data.min.json
