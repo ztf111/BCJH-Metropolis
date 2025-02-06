@@ -132,9 +132,7 @@ States SARunner::run(States *s0,
     this->bestEnergy = energy;
     int step = 0;
     double t = this->tMax;
-#if defined(_WIN32) || defined(EMSCRIPTEN_PROGRESS)
     int progressPercent = 0;
-#endif
     int changed = 0;
     while (step < this->stepMax) {
 
@@ -148,7 +146,6 @@ States SARunner::run(States *s0,
         }
 
 #endif
-#ifdef _WIN32
 
         if (progress && !silent) {
             if (step * 10 / stepMax > progressPercent) {
@@ -159,7 +156,6 @@ States SARunner::run(States *s0,
             }
         }
 
-#endif
         States newS;
         newS = (*randomMoveFunc)(s);
         debugIntegrity(newS);
@@ -226,12 +222,10 @@ States SARunner::run(States *s0,
     //     }
     //     std::cout << changedFinal << "/" << iterRecipe << " ";
     // }
-#ifdef _WIN32
     if (progress && !silent) {
         MultiThreadProgressBar::getInstance(threadId)->print(
             threadId, 100, "最高分数：" + std::to_string(this->bestEnergy));
     }
-#endif
 #ifdef EMSCRIPTEN_PROGRESS
     if (postProgress != emscripten::val::null()) {
         postProgress(100);

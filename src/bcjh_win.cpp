@@ -51,6 +51,7 @@ parseArgs(int argc, char *argv[]) {
             std::cout << "-R: 菜谱迭代次数，默认1000" << std::endl;
             std::cout << "--no-mp: 禁用多线程" << std::endl;
             std::cout << "--recover-str: 恢复代码" << std::endl;
+            std::cout << "--target: 目标分数，默认4000000" << std::endl;
         } else if (arg == "--no-mp") {
             mp = false;
         } else if (arg == "--seed") {
