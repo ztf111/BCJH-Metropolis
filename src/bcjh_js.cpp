@@ -55,8 +55,11 @@ std::pair<Json::Value, Json::Value> loadJson(std::stringstream &userDataSs) {
     gameDataF.close();
 
     userDataSs >> userData;
-    userData["type"] = "bcjh";
-
+    if (userData.isMember("decorationEffect")) {
+        userData["type"] = "in-game";
+    } else {
+        userData["type"] = "bcjh";
+    }
     return {std::move(gameData), std::move(userData)};
 }
 
