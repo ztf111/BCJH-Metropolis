@@ -119,11 +119,17 @@ StatesRecorderFile::StatesRecorderFile(std::string filename, std::size_t id,
             std::string((std::istreambuf_iterator<char>(inputFile)),
                         std::istreambuf_iterator<char>()));
         deserialize_states(inputStream);
-        std::cout << "从存档点" << id << "恢复" << states.size()
-                  << "条记录。若要重新开始，请删除同一目录下states."
-                     "txt文件。"
-                  << std::endl;
-            // }
+        if (states.size() > 0) {
+            std::cout << "从存档点" << id << "恢复" << states.size()
+                      << "条记录。若要重新开始，请删除同一目录下states."
+                         "txt文件。"
+                      << std::endl;
+        } else {
+            std::cout << "读取到存档" << id
+                      << "，但匹配的没有记录，将从头初始化。" << std::endl;
+        }
+
+        // }
     }
     inputFile.close();
     this->id = id;
