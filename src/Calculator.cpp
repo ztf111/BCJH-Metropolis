@@ -113,6 +113,11 @@ BanquetInfo getPrice(const Skill &skill, Recipe *recipe, BanquetRuleTogether &r,
 const BanquetRule &BanquetRuleTogether::merge() {
     this->lenientRule.execOneMore();
     this->lenientRule.addRule.add(this->strictRule.addRule);
-    this->lenientRule.baseRule.add(this->strictRule.baseRule);
+    this->lenientRule.baseRule.add(this->strictRule.baseRule);    
+    {
+        // Delayed full add
+        auto& addr= lenientRule.addRule;
+        addr.full += this->strictRule.delayedFullAdd;
+    }
     return this->lenientRule;
 }

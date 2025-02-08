@@ -223,12 +223,17 @@ class CreatePhaseRulesEffect : public Effect {
 class FullAddEffect : public Effect {
   public:
     int full;
-    FullAddEffect(int full) : full(full) {}
+    bool delayedAdd;
+    FullAddEffect(int full) : full(full), delayedAdd(false) {}
     void operator()(BanquetRuleTogether *brt, int i, States &s) const override {
-        if (strict) {
-            brt[i].strictRule.addRule.full += full;
+        if (delayedAdd) {
+            brt[i].strictRule.delayedFullAdd += full;
         } else {
-            brt[i].lenientRule.addRule.full += full;
+            if (strict) {
+                brt[i].strictRule.addRule.full += full;
+            } else {
+                brt[i].lenientRule.addRule.full += full;
+            }
         }
     }
 };

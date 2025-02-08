@@ -59,6 +59,7 @@ class BanquetRule {
  *
  */
 struct BanquetStrictRule : public BanquetRule {
+    int delayedFullAdd;
     void oneMore() {
         std::cout << "BanquetStrictRule has no oneMore()";
         exit(1);

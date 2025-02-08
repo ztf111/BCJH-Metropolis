@@ -79,6 +79,13 @@ loadBanquetRuleFromJson(const Json::Value &rulesTarget, const GDMap &allBuffs,
 
                     auto singleRule = getRuleFromJson(buffContent, d,
                                                       allIntents, allBuffs, 1);
+                    {
+                        auto *fae = dynamic_cast<FullAddEffect *>(
+                            singleRule->effect.get());
+                        if (fae) {
+                            fae->delayedAdd = true;
+                        }
+                    }
                     auto e = std::make_shared<CreatePhaseRulesEffect>(
                         singleRule, DISH_PER_CHEF, true, false);
                     auto rule = std::make_shared<SingleConditionRule>(

@@ -1,17 +1,12 @@
 cmake_minimum_required(VERSION 3.5)
-set(CMAKE_CXX_COMPILER "/usr/bin/g++-10")
 # set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(PJNAME bcjh)
 project(${PJNAME})
 include_directories(src/include) 
 
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    # require at least gcc 7.1
-    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 10)
-        message(FATAL_ERROR "GCC version must be at least 10 to compile c++20!" ${CMAKE_CXX_COMPILER_VERSION})
-    endif()
-endif()
 
 # Add debug definitions
 string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
@@ -44,8 +39,7 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
     execute_process(COMMAND bash assets/removeSpaces.sh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     message(STATUS "Spaces and newlines in data.min.json have been removed.")
 else()
-    set(CMAKE_CXX_STANDARD 20)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -pthread -Wall -Wextra -Wno-reorder -Wno-unused-parameter")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wall -Wextra -Wno-reorder -Wno-unused-parameter")
     # add_definitions(-DNOJIT) # EMS doesn't really work with SSE2?
 
 endif()
